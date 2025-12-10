@@ -1,19 +1,7 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows;
 
 namespace SandSurvival
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         public MainWindow()
@@ -21,9 +9,22 @@ namespace SandSurvival
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        // Action quand on clique sur le bouton JOUER
+        private void Button_Jouer_Click(object sender, RoutedEventArgs e)
         {
+            MessageBox.Show("Lancement du jeu !");
+        }
 
+        // Action quand on clique sur le bouton PARAMÈTRES
+        private void Button_Parametre_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Ouverture des paramètres...");
+        }
+
+        // Action quand on clique sur le bouton CRÉDIT
+        private void Button_Credit_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Affichage des crédits...");
         }
     }
 }
