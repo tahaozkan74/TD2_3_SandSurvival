@@ -9,22 +9,22 @@ namespace SandSurvival
             InitializeComponent();
         }
 
-        // Action quand on clique sur le bouton JOUER
+        // Action : JOUER
         private void Button_Jouer_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Lancement du jeu !");
         }
 
-        // Action quand on clique sur le bouton PARAMÈTRES
+        // Action : PARAMÈTRES
         private void Button_Parametre_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Ouverture des paramètres...");
         }
 
-        // Action quand on clique sur le bouton CRÉDIT
-        private void Button_Credit_Click(object sender, RoutedEventArgs e)
+        // Action : QUITTER (Correction demandée)
+        private void Button_Quitter_Click(object sender, RoutedEventArgs e)
         {
-            //MessageBox.Show("Affichage des crédits...");
+            // Cette commande ferme proprement l'application
             Application.Current.Shutdown();
         }
     }

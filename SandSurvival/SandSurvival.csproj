@@ -9,9 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Images\BOUTON\buttonCredit.png" />
     <None Remove="Images\BOUTON\buttonJouer.png" />
     <None Remove="Images\BOUTON\buttonParametre.png" />
+    <None Remove="Images\BOUTON\buttonQuitter.png" />
     <None Remove="Images\image de fond\ecranaccueil.png" />
     <None Remove="Images\image de fond\imageFond1.png" />
     <None Remove="Images\image de fond\imageFond2.png" />
@@ -25,13 +25,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Images\BOUTON\buttonCredit.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="Images\BOUTON\buttonJouer.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\BOUTON\buttonParametre.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\BOUTON\buttonQuitter.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\image de fond\ecranaccueil.png">
