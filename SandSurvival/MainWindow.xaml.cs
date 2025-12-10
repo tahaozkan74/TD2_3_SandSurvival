@@ -24,7 +24,8 @@ namespace SandSurvival
         // Action quand on clique sur le bouton CRÉDIT
         private void Button_Credit_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Affichage des crédits...");
+            //MessageBox.Show("Affichage des crédits...");
+            Application.Current.Shutdown();
         }
     }
 }
