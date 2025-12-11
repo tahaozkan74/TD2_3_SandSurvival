@@ -5,51 +5,55 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SandSurvival"
         mc:Ignorable="d"
-        Title="Sand Survival" Height="450" Width="800"
-        Icon="P:\SAE - 1.01\SandSurvival-11-12-25\SandSurvival\Images\image de fond\icon.ico">
+        Title="Sand Survival" Height="450" Width="800">
+        
 
     <Grid>
         <Image Source="/Images/image de fond/ecranaccueil.png" Stretch="Fill"/>
 
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="1.2*"/>
+                <RowDefinition Height="1.1*"/>
                 <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="1" Margin="10,0,10,10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*"/>
-                    <ColumnDefinition Width="2*"/>
-                    <ColumnDefinition Width="1*"/>
-                </Grid.ColumnDefinitions>
+            <Viewbox Grid.Row="1" Stretch="Uniform" VerticalAlignment="Bottom" Margin="0,0,0,20">
 
-                <Viewbox Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Stretch="Uniform">
-                    <Button Click="Button_Credit_Click" Background="Transparent" BorderThickness="0">
-                        <Image Source="/Images/BOUTON/buttonCredit.png" Width="150"/>
+                <Grid Width="1000">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0" Click="Button_Credit_Click" 
+                            Background="Transparent" BorderThickness="0" 
+                            HorizontalAlignment="Left" VerticalAlignment="Bottom" 
+                            Margin="20,0,0,0">
+                        <Image Source="/Images/BOUTON/buttonCredit.png" Width="200" Stretch="Uniform"/>
                     </Button>
-                </Viewbox>
 
-                <Viewbox Grid.Column="1" VerticalAlignment="Center" Stretch="Uniform">
-                    <StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                         <Button Click="Button_Jouer_Click" Background="Transparent" BorderThickness="0" Margin="0,5">
-                            <Image Source="/Images/BOUTON/buttonJouer.png" Width="200"/>
+                            <Image Source="/Images/BOUTON/buttonJouer.png" Width="200" Stretch="Uniform"/>
                         </Button>
                         <Button Click="Button_Parametre_Click" Background="Transparent" BorderThickness="0" Margin="0,5">
-                            <Image Source="/Images/BOUTON/buttonParametre.png" Width="200"/>
+                            <Image Source="/Images/BOUTON/buttonParametre.png" Width="200" Stretch="Uniform"/>
                         </Button>
                         <Button Click="Button_Quitter_Click" Background="Transparent" BorderThickness="0" Margin="0,5">
-                            <Image Source="/Images/BOUTON/buttonQuitter.png" Width="200"/>
+                            <Image Source="/Images/BOUTON/buttonQuitter.png" Width="200" Stretch="Uniform"/>
                         </Button>
                     </StackPanel>
-                </Viewbox>
 
-                <Viewbox Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Stretch="Uniform">
-                    <Button Click="Button_Regles_Click" Background="Transparent" BorderThickness="0">
-                        <Image Source="/Images/BOUTON/buttonRegles.png" Width="150"/>
+                    <Button Grid.Column="2" Click="Button_Regles_Click" 
+                            Background="Transparent" BorderThickness="0" 
+                            HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                            Margin="0,0,20,0">
+                        <Image Source="/Images/BOUTON/buttonRegles.png" Width="200" Stretch="Uniform"/>
                     </Button>
-                </Viewbox>
-            </Grid>
+
+                </Grid>
+            </Viewbox>
         </Grid>
 
         <Grid x:Name="GridRegles" Visibility="Collapsed" Background="#AA000000">
@@ -87,20 +91,52 @@
             </Button>
 
             <Canvas x:Name="CanvasCredit" ClipToBounds="True">
-                <StackPanel x:Name="StackPanelCredit" Width="800" Canvas.Top="450">
+                <StackPanel x:Name="StackPanelCredit" Width="{Binding ActualWidth, ElementName=CanvasCredit}" Canvas.Top="1000">
                     <TextBlock Text="CRÉDITS" Foreground="Yellow" FontSize="40" FontWeight="Bold" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,30"/>
+
                     <TextBlock Text="Ce jeux-vidéo nommé Sand Survival Desert a été créé dans le but de la SAE 1.01 et 1.02" 
                                Foreground="White" FontSize="22" TextAlignment="Center" TextWrapping="Wrap" Margin="50,10"/>
+
                     <TextBlock Text="par Fatih YILDIRIM et Taha OZKAN" 
                                Foreground="White" FontSize="26" FontWeight="Bold" TextAlignment="Center" TextWrapping="Wrap" Margin="50,10"/>
+
                     <TextBlock Text="du TP22" 
                                Foreground="LightGray" FontSize="20" TextAlignment="Center" Margin="0,10"/>
+
                     <TextBlock Text="pour M.DIARD et MME.GRUSON." 
                                Foreground="White" FontSize="22" TextAlignment="Center" TextWrapping="Wrap" Margin="50,30"/>
+
                     <TextBlock Text="Dans l'espoir que notre jeu vous plaira." 
                                Foreground="Yellow" FontSize="24" FontStyle="Italic" TextAlignment="Center" Margin="0,50"/>
+
+                    <TextBlock Text="" Height="100"/>
                 </StackPanel>
             </Canvas>
+        </Grid>
+
+        <Grid x:Name="GridParametres" Visibility="Collapsed" Background="#AA000000">
+            <Viewbox Stretch="Uniform" Width="400">
+                <Border Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="4" CornerRadius="10" Padding="30" Width="400">
+                    <Grid>
+                        <StackPanel>
+                            <TextBlock Text="PARAMÈTRES" FontFamily="Segoe UI Black" FontSize="30" Foreground="#8B4513" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+                            <TextBlock Text="Volume de la Musique" FontSize="20" FontWeight="Bold" Foreground="#5C3317" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                            <Slider x:Name="SliderVolume" Minimum="0" Maximum="1" Value="0.5" Width="300" 
+                                    ValueChanged="SliderVolume_ValueChanged" 
+                                    IsMoveToPointEnabled="True" Margin="0,0,0,20"/>
+                            <TextBlock Text="(Ajustez le curseur pour changer le volume)" FontSize="12" Foreground="#8B4513" FontStyle="Italic" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                        <Button Click="Button_FermerParametre_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="-20,-20,-20,0" Width="40" Height="40" Background="Red" BorderBrush="#8B4513" BorderThickness="2">
+                            <TextBlock Text="X" FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="20"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Viewbox>
         </Grid>
 
     </Grid>
