@@ -52,8 +52,12 @@ namespace SandSurvival
 
         private void Button_Jouer_Click(object sender, RoutedEventArgs e)
         {
-            // C'est ici que nous coderons le lancement du jeu à la prochaine étape
-            MessageBox.Show("Lancement du jeu !");
+            // 1. Créer la fenêtre du jeu
+            Jeu fenetreJeu = new Jeu();
+            // 2. L'afficher
+            fenetreJeu.Show();
+            // 3. Fermer le menu actuel
+            this.Close();
         }
 
         private void Button_Quitter_Click(object sender, RoutedEventArgs e)
