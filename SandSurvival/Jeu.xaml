@@ -6,7 +6,6 @@
         xmlns:local="clr-namespace:SandSurvival"
         mc:Ignorable="d"
         Title="Sand Survival - Desert" Height="720" Width="1280"
-        Icon ="P:\SAE - 1.01\SandSurvival-11-12-25\SandSurvival\Images\image de fond\icon.ico"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
         KeyDown="Window_KeyDown" KeyUp="Window_KeyUp"
@@ -33,9 +32,21 @@
                 </Image.RenderTransform>
             </Image>
 
+            <Image x:Name="Mummy" 
+                   Source="/Images/mommy/marche1.png" 
+                   Width="130" Height="130" 
+                   Canvas.Left="500" Canvas.Top="500"
+                   Panel.ZIndex="9998"
+                   RenderTransformOrigin="0.5,0.5">
+                <Image.RenderTransform>
+                    <ScaleTransform x:Name="MummyScale" ScaleX="1"/>
+                </Image.RenderTransform>
+            </Image>
+
         </Canvas>
+
         <Border Background="#CC333333" CornerRadius="8" Canvas.Left="20" Canvas.Top="20" Padding="15,8">
-            <TextBlock Text="ZONE : DESERT HOSTILE" Foreground="#FFCC00" FontFamily="Segoe UI Black" FontSize="18"/>
+            <TextBlock Text="ATTENTION : MOMIE EN APPROCHE" Foreground="#FF0000" FontFamily="Segoe UI Black" FontSize="18"/>
         </Border>
 
         <Button Click="Button_Menu_Click" Canvas.Right="20" Canvas.Top="20" Width="140" Height="50" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="4" Panel.ZIndex="10000">

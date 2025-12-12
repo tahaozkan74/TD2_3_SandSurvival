@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:SandSurvival"
         mc:Ignorable="d"
         Title="Sand Survival" Height="450" Width="800"
-        Icon ="P:\SAE - 1.01\SandSurvival-11-12-25\SandSurvival\Images\image de fond\icon.ico">
+        Icon ="Images\image de fond\icon.ico">
 
     <Grid>
         <Image Source="/Images/image de fond/ecranaccueil.png" Stretch="Fill"/>
