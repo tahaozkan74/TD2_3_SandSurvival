@@ -14,49 +14,103 @@
         SnapsToDevicePixels="True"
         UseLayoutRounding="True">
 
-    <Canvas x:Name="EcranPrincipal" ClipToBounds="True" Background="#DDB678">
+    <Grid Background="#DDB678">
 
-        <Canvas x:Name="MondeDeJeu">
-            <Canvas.RenderTransform>
-                <TranslateTransform x:Name="Camera" X="0" Y="0"/>
-            </Canvas.RenderTransform>
+        <Canvas x:Name="EcranPrincipal" ClipToBounds="True">
+            <Canvas x:Name="MondeDeJeu">
+                <Canvas.RenderTransform>
+                    <TranslateTransform x:Name="Camera" X="0" Y="0"/>
+                </Canvas.RenderTransform>
 
-            <Image x:Name="Player" 
+                <Image x:Name="Player" 
                    Source="/Images/Player/walk0.png" 
                    Width="130" Height="130" 
-                   Canvas.Left="0" Canvas.Top="0"
+                   Canvas.Left="39" Canvas.Top="126"
                    Panel.ZIndex="9999"
                    RenderTransformOrigin="0.5,0.5">
-                <Image.RenderTransform>
-                    <ScaleTransform x:Name="PlayerScale" ScaleX="1"/>
-                </Image.RenderTransform>
-            </Image>
+                    <Image.RenderTransform>
+                        <ScaleTransform x:Name="PlayerScale" ScaleX="1"/>
+                    </Image.RenderTransform>
+                </Image>
 
-            <Image x:Name="Mummy" 
-                   Source="/Images/mommy/marche1.png" 
-                   Width="130" Height="130" 
-                   Canvas.Left="500" Canvas.Top="500"
-                   Panel.ZIndex="9998"
-                   RenderTransformOrigin="0.5,0.5">
-                <Image.RenderTransform>
-                    <ScaleTransform x:Name="MummyScale" ScaleX="1"/>
-                </Image.RenderTransform>
-            </Image>
+            </Canvas>
+        </Canvas>
+
+        <Canvas>
+            <Button Click="Button_Menu_Click" Canvas.Right="20" Canvas.Top="20" Width="140" Height="50" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="4" Panel.ZIndex="10000">
+                <TextBlock Text="MENU" FontFamily="Segoe UI Black" FontSize="20" Foreground="#8B4513"/>
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="10"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+
+            <ProgressBar x:Name="BarreDeVie" 
+                         Width="300" Height="30" 
+                         Value="100" Maximum="100" 
+                         Canvas.Left="20" Canvas.Top="20"
+                         Foreground="Green" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
+            <TextBlock Text="SANTÉ" Canvas.Left="30" Canvas.Top="24" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
+
+            <ProgressBar x:Name="BarreStamina" 
+                         Width="250" Height="15" 
+                         Value="100" Maximum="100" 
+                         Canvas.Left="20" Canvas.Top="60"
+                         Foreground="Orange" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
+            <TextBlock Text="ENDURANCE" FontSize="10" Canvas.Left="30" Canvas.Top="61" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
 
         </Canvas>
 
-        <Border Background="#CC333333" CornerRadius="8" Canvas.Left="20" Canvas.Top="20" Padding="15,8">
-            <TextBlock Text="ATTENTION : MOMIE EN APPROCHE" Foreground="#FF0000" FontFamily="Segoe UI Black" FontSize="18"/>
-        </Border>
+        <Grid x:Name="GridCompteARebours" 
+              VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0"
+              IsHitTestVisible="False">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock x:Name="TexteAnnonceVague" Text="LA VAGUE 1 VA COMMENCER DANS" 
+                           FontFamily="Segoe UI Black" FontSize="40" Foreground="#8B4513" 
+                           TextAlignment="Center" Margin="0,0,0,10">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="White" ShadowDepth="0" BlurRadius="5" Opacity="1"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+                <TextBlock x:Name="TexteChrono" Text="5" 
+                           FontFamily="Segoe UI Black" FontSize="100" Foreground="Red" 
+                           TextAlignment="Center">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="Black" ShadowDepth="5" BlurRadius="2" Opacity="0.5"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+            </StackPanel>
+        </Grid>
 
-        <Button Click="Button_Menu_Click" Canvas.Right="20" Canvas.Top="20" Width="140" Height="50" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="4" Panel.ZIndex="10000">
-            <TextBlock Text="MENU" FontFamily="Segoe UI Black" FontSize="20" Foreground="#8B4513"/>
-            <Button.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="10"/>
-                </Style>
-            </Button.Resources>
-        </Button>
+        <Grid x:Name="GridVagueFinie" Visibility="Collapsed"
+              VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0"
+              IsHitTestVisible="False">
+            <TextBlock x:Name="TexteFinVague" Text="VAGUE 1 TERMINÉE" 
+                       FontFamily="Segoe UI Black" FontSize="60" Foreground="#228B22" 
+                       TextAlignment="Center">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="White" ShadowDepth="0" BlurRadius="5" Opacity="1"/>
+                </TextBlock.Effect>
+            </TextBlock>
+        </Grid>
 
-    </Canvas>
+        <Grid x:Name="GridSurvie" Visibility="Collapsed"
+              VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,50,0,0" IsHitTestVisible="False">
+            <TextBlock Text="SURVIVEZ !" FontFamily="Segoe UI Black" FontSize="70" Foreground="DarkRed">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Red" ShadowDepth="0" BlurRadius="20" Opacity="0.8"/>
+                </TextBlock.Effect>
+            </TextBlock>
+        </Grid>
+
+        <Grid x:Name="GridGameOver" Visibility="Collapsed" Panel.ZIndex="20000" Background="Black">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="GAME OVER" FontFamily="Segoe UI Black" FontSize="90" Foreground="#FF3333" HorizontalAlignment="Center"/>
+                <Button Click="Button_Reessayer_Click" Content="RÉESSAYER" Width="300" Height="80" FontSize="40" FontFamily="Segoe UI Black" Margin="0,20"/>
+                <Button Click="Button_Menu_Click" Content="MENU" Width="200" Height="50" FontSize="20" FontFamily="Segoe UI Black"/>
+            </StackPanel>
+        </Grid>
+
+    </Grid>
 </Window>

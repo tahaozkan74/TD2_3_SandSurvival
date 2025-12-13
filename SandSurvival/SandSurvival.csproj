@@ -16,22 +16,25 @@
     <None Remove="Images\BOUTON\buttonQuitter.png" />
     <None Remove="Images\BOUTON\buttonRegles.png" />
     <None Remove="Images\image de fond\ecranaccueil.png" />
+    <None Remove="Images\image de fond\fond1.png" />
+    <None Remove="Images\image de fond\fond2.png" />
+    <None Remove="Images\image de fond\fond3.png" />
+    <None Remove="Images\image de fond\fond4.png" />
     <None Remove="Images\image de fond\icon.ico" />
-    <None Remove="Images\image de fond\imageFond1.png" />
-    <None Remove="Images\image de fond\imageFond2.png" />
-    <None Remove="Images\image de fond\imageFond3.png" />
-    <None Remove="Images\image de fond\imageFond4.png" />
-    <None Remove="Images\image de fond\imageFond5.png" />
-    <None Remove="Images\image de fond\imageFond6.png" />
-    <None Remove="Images\image de fond\imageFond7.png" />
-    <None Remove="Images\image de fond\imageFond8.png" />
-    <None Remove="Images\image de fond\imageFond9.png" />
+    <None Remove="Images\mommy\attaque1.png" />
+    <None Remove="Images\mommy\attaque2.png" />
+    <None Remove="Images\mommy\attaque3.png" />
     <None Remove="Images\mommy\marche1.png" />
     <None Remove="Images\mommy\marche2.png" />
     <None Remove="Images\mommy\marche3.png" />
     <None Remove="Images\mommy\marche4.png" />
     <None Remove="Images\mommy\marche5.png" />
     <None Remove="Images\mommy\marche6.png" />
+    <None Remove="Images\mommy\meurt1.png" />
+    <None Remove="Images\mommy\meurt2.png" />
+    <None Remove="Images\mommy\meurt3.png" />
+    <None Remove="Images\mommy\meurt4.png" />
+    <None Remove="Images\mommy\meurt5.png" />
     <None Remove="Images\Player\attaque1.png" />
     <None Remove="Images\Player\attaque2.png" />
     <None Remove="Images\Player\attaque3.png" />
@@ -70,34 +73,28 @@
     <Resource Include="Images\image de fond\ecranaccueil.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\image de fond\fond1.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\image de fond\fond2.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\image de fond\fond3.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\image de fond\fond4.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\image de fond\icon.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Images\image de fond\imageFond1.png">
+    <Resource Include="Images\mommy\attaque1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Images\image de fond\imageFond2.png">
+    <Resource Include="Images\mommy\attaque2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Images\image de fond\imageFond3.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\imageFond4.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\imageFond5.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\imageFond6.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\imageFond7.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\imageFond8.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\imageFond9.png">
+    <Resource Include="Images\mommy\attaque3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\mommy\marche1.png">
@@ -116,6 +113,21 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\mommy\marche6.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\mommy\meurt1.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\mommy\meurt2.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\mommy\meurt3.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\mommy\meurt4.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\mommy\meurt5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Player\attaque1.png">
