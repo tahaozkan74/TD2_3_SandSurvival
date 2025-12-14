@@ -16,10 +16,7 @@
     <None Remove="Images\BOUTON\buttonQuitter.png" />
     <None Remove="Images\BOUTON\buttonRegles.png" />
     <None Remove="Images\image de fond\ecranaccueil.png" />
-    <None Remove="Images\image de fond\fond1.png" />
-    <None Remove="Images\image de fond\fond2.png" />
-    <None Remove="Images\image de fond\fond3.png" />
-    <None Remove="Images\image de fond\fond4.png" />
+    <None Remove="Images\image de fond\fond.png" />
     <None Remove="Images\image de fond\icon.ico" />
     <None Remove="Images\mommy\attaque1.png" />
     <None Remove="Images\mommy\attaque2.png" />
@@ -73,16 +70,7 @@
     <Resource Include="Images\image de fond\ecranaccueil.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Images\image de fond\fond1.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\fond2.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\fond3.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\image de fond\fond4.png">
+    <Resource Include="Images\image de fond\fond.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\image de fond\icon.ico">

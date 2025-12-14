@@ -25,7 +25,7 @@
                 <Image x:Name="Player" 
                    Source="/Images/Player/walk0.png" 
                    Width="130" Height="130" 
-                   Canvas.Left="39" Canvas.Top="126"
+                   Canvas.Left="0" Canvas.Top="0"
                    Panel.ZIndex="9999"
                    RenderTransformOrigin="0.5,0.5">
                     <Image.RenderTransform>
@@ -59,7 +59,6 @@
                          Canvas.Left="20" Canvas.Top="60"
                          Foreground="Orange" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
             <TextBlock Text="ENDURANCE" FontSize="10" Canvas.Left="30" Canvas.Top="61" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
-
         </Canvas>
 
         <Grid x:Name="GridCompteARebours" 
@@ -73,7 +72,7 @@
                         <DropShadowEffect Color="White" ShadowDepth="0" BlurRadius="5" Opacity="1"/>
                     </TextBlock.Effect>
                 </TextBlock>
-                <TextBlock x:Name="TexteChrono" Text="5" 
+                <TextBlock x:Name="TexteChrono" Text="10" 
                            FontFamily="Segoe UI Black" FontSize="100" Foreground="Red" 
                            TextAlignment="Center">
                     <TextBlock.Effect>

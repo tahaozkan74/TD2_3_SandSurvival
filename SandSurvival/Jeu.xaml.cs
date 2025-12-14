@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq; // Important pour gérer les listes
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -10,7 +10,6 @@ using System.Windows.Threading;
 
 namespace SandSurvival
 {
-    // Classe simple pour gérer chaque Momie individuellement
     public class Ennemi
     {
         public Image Sprite { get; set; }
@@ -19,8 +18,6 @@ namespace SandSurvival
         public int HP { get; set; }
         public bool IsDead { get; set; }
         public bool IsDying { get; set; }
-
-        // Animation propre à cet ennemi
         public int FrameIndex { get; set; }
         public int FrameCounter { get; set; }
     }
@@ -38,15 +35,20 @@ namespace SandSurvival
         private double stamina = 100;
         private bool canRun = true;
 
+        // --- COLLISIONS MAP ---
+        // Liste des rectangles infranchissables (Murs, Cactus)
+        private List<Rect> obstaclesSolides = new List<Rect>();
+        // Liste des rectangles qui ralentissent (Eau)
+        private List<Rect> zonesEau = new List<Rect>();
+
         // --- LISTE DES ENNEMIS ---
         private List<Ennemi> enemies = new List<Ennemi>();
 
-        // --- RESSOURCES GRAPHIQUES ---
+        // --- RESSOURCES ---
         private List<BitmapImage> mummySprites = new List<BitmapImage>();
         private List<BitmapImage> mummyAttackSprites = new List<BitmapImage>();
         private List<BitmapImage> mummyDeathSprites = new List<BitmapImage>();
 
-        // --- ANIMATIONS JOUEUR ---
         private List<BitmapImage> walkSprites = new List<BitmapImage>();
         private List<BitmapImage> attackSprites = new List<BitmapImage>();
         private List<BitmapImage> runSprites = new List<BitmapImage>();
@@ -58,26 +60,24 @@ namespace SandSurvival
         private bool isAttacking = false;
         private int currentFrame = 0;
         private int frameCounter = 0;
+
+        // CORRECTION ERREUR : La variable manquante est ici !
         private int frameDelay = 5;
 
         // --- MAP INFINIE ---
         private List<BitmapImage> solTextures = new List<BitmapImage>();
         private Dictionary<string, Image> tuilesActives = new Dictionary<string, Image>();
-
-        // IMPORTANT : Si tes images font 1024x1024, laisse 1024. Si elles sont plus petites, ajuste ce nombre.
         private int tailleTuile = 1024;
         private int distanceVue = 2;
 
-        // --- SYSTEME DE VAGUES ---
+        // --- VAGUES ---
         private int currentWave = 1;
         private int enemiesToKillTotal = 3;
         private int enemiesKilledInWave = 0;
         private int enemiesSpawnedInWave = 0;
-
         private bool isSurvivalMode = false;
         private double spawnTimer = 0;
 
-        // Etats de transition
         private bool isWaveActive = false;
         private bool isCountingDown = true;
         private bool isWaveFinishedMessage = false;
@@ -88,6 +88,9 @@ namespace SandSurvival
         {
             InitializeComponent();
             LoadAssets();
+
+            // On initialise les murs et l'eau
+            InitMapCollisions();
 
             BarreDeVie.Value = vieJoueur;
             BarreStamina.Value = stamina;
@@ -101,6 +104,52 @@ namespace SandSurvival
             this.Focus();
         }
 
+        // --- DEFINITION DES COLLISIONS (Basé sur fond.jpg) ---
+        private void InitMapCollisions()
+        {
+            // Les coordonnées sont : X, Y, Largeur, Hauteur (sur l'image 1024x1024)
+
+            // 1. L'EAU (Ralentissement)
+            // La rivière en haut à gauche
+            zonesEau.Add(new Rect(0, 0, 350, 400));
+            // La piscine en bas à droite (Oasis)
+            zonesEau.Add(new Rect(550, 600, 300, 200));
+
+            // 2. OBSTACLES SOLIDES (Murs / Cactus)
+            // Ruines en haut à droite
+            obstaclesSolides.Add(new Rect(780, 50, 200, 200));
+
+            // Ruines en bas à gauche
+            obstaclesSolides.Add(new Rect(20, 650, 200, 250));
+
+            // Ruines au milieu (arche cassée)
+            obstaclesSolides.Add(new Rect(600, 300, 200, 150));
+
+            // Quelques cactus (approx)
+            obstaclesSolides.Add(new Rect(550, 50, 30, 80)); // Cactus haut
+            obstaclesSolides.Add(new Rect(260, 750, 30, 80)); // Cactus bas
+            obstaclesSolides.Add(new Rect(900, 700, 30, 80)); // Cactus droite
+        }
+
+        private void LoadAssets()
+        {
+            try
+            {
+                // Vérifie si ton image s'appelle fond.png ou fond.jpg ici !
+                solTextures.Add(new BitmapImage(new Uri("pack://application:,,,/Images/image de fond/fond.png"))); // J'ai mis .jpg vu tes fichiers
+
+                for (int i = 0; i < 8; i++) walkSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/Player/walk{i}.png")));
+                for (int i = 1; i <= 3; i++) attackSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/Player/attaque{i}.png")));
+                for (int i = 1; i <= 3; i++) runSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/Player/course{i}.png")));
+
+                for (int i = 1; i <= 6; i++) mummySprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/mommy/marche{i}.png")));
+                for (int i = 1; i <= 3; i++) mummyAttackSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/mommy/attaque{i}.png")));
+                for (int i = 1; i <= 5; i++) mummyDeathSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/mommy/meurt{i}.png")));
+            }
+            catch (Exception ex) { MessageBox.Show("Erreur Assets: " + ex.Message); }
+        }
+
+        // --- CORRECTION ERREUR : La fonction SetupWave est bien là ---
         private void SetupWave(int waveNumber)
         {
             currentWave = waveNumber;
@@ -117,17 +166,15 @@ namespace SandSurvival
 
             if (currentWave <= 3)
             {
-                // Vagues classiques
                 isSurvivalMode = false;
                 enemiesToKillTotal = 3;
                 TexteAnnonceVague.Text = "LA VAGUE " + currentWave + " VA COMMENCER DANS";
-                TexteChrono.Text = "10";
-                waveCountdown = 10.0;
+                TexteChrono.Text = "5";
+                waveCountdown = 5.0;
                 GridSurvie.Visibility = Visibility.Collapsed;
             }
             else
             {
-                // MODE SURVIE
                 isSurvivalMode = true;
                 TexteAnnonceVague.Text = "PRÉPAREZ-VOUS À SURVIVRE...";
                 TexteChrono.Text = "5";
@@ -139,48 +186,40 @@ namespace SandSurvival
             isWaveActive = false;
         }
 
-        private void LoadAssets()
-        {
-            try
-            {
-                // --- MODIFICATION ICI : CHARGEMENT DES 4 NOUVEAUX FONDS ---
-                // On charge fond1.png, fond2.png, fond3.png, fond4.png
-                for (int i = 1; i <= 4; i++)
-                    solTextures.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/image de fond/fond{i}.png")));
-
-                // Perso
-                for (int i = 0; i < 8; i++) walkSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/Player/walk{i}.png")));
-                for (int i = 1; i <= 3; i++) attackSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/Player/attaque{i}.png")));
-                for (int i = 1; i <= 3; i++) runSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/Player/course{i}.png")));
-                // Momie
-                for (int i = 1; i <= 6; i++) mummySprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/mommy/marche{i}.png")));
-                for (int i = 1; i <= 3; i++) mummyAttackSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/mommy/attaque{i}.png")));
-                for (int i = 1; i <= 5; i++) mummyDeathSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/mommy/meurt{i}.png")));
-            }
-            catch (Exception ex) { MessageBox.Show("Erreur Assets: " + ex.Message); }
-        }
-
         private void GameLoop(object sender, EventArgs e)
         {
             GererVaguesEtSpawns();
             GererStamina();
 
-            double currentSpeed = (isRunning && canRun) ? runSpeed : walkSpeed;
+            // 1. VITESSE & EAU
+            double baseSpeed = (isRunning && canRun) ? runSpeed : walkSpeed;
+            double currentX = Canvas.GetLeft(Player);
+            double currentY = Canvas.GetTop(Player);
 
-            // Déplacement Joueur
-            double x = Canvas.GetLeft(Player);
-            double y = Canvas.GetTop(Player);
+            // Si on est dans l'eau, on divise la vitesse par 2
+            if (EstDansZone(currentX, currentY, zonesEau))
+            {
+                baseSpeed = baseSpeed / 2;
+            }
+
+            // 2. DÉPLACEMENT & COLLISIONS MURS
+            double nextX = currentX;
+            double nextY = currentY;
             bool isMoving = false;
 
-            if (goUp) { y -= currentSpeed; isMoving = true; }
-            if (goDown) { y += currentSpeed; isMoving = true; }
-            if (goLeft) { x -= currentSpeed; isMoving = true; PlayerScale.ScaleX = -1; }
-            if (goRight) { x += currentSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
+            if (goUp) { nextY -= baseSpeed; isMoving = true; }
+            if (goDown) { nextY += baseSpeed; isMoving = true; }
+            if (goLeft) { nextX -= baseSpeed; isMoving = true; PlayerScale.ScaleX = -1; }
+            if (goRight) { nextX += baseSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
 
-            Canvas.SetLeft(Player, x);
-            Canvas.SetTop(Player, y);
+            // On vérifie si la PROCHAINE position touche un mur. Si non, on avance.
+            if (!EstDansZone(nextX, currentY, obstaclesSolides)) currentX = nextX;
+            if (!EstDansZone(currentX, nextY, obstaclesSolides)) currentY = nextY;
 
-            UpdateEnemies(x, y);
+            Canvas.SetLeft(Player, currentX);
+            Canvas.SetTop(Player, currentY);
+
+            UpdateEnemies(currentX, currentY);
 
             if (estInvulnerable)
             {
@@ -190,39 +229,48 @@ namespace SandSurvival
 
             double screenCenterX = this.ActualWidth / 2;
             double screenCenterY = this.ActualHeight / 2;
-            Camera.X = screenCenterX - x - (Player.Width / 2);
-            Camera.Y = screenCenterY - y - (Player.Height / 2);
+            Camera.X = screenCenterX - currentX - (Player.Width / 2);
+            Camera.Y = screenCenterY - currentY - (Player.Height / 2);
 
-            MiseAJourMap(x, y);
+            MiseAJourMap(currentX, currentY);
             GererAnimationJoueur(isMoving);
         }
 
-        // --- GESTION ENDURANCE ---
+        // --- SYSTEME DE COLLISION ---
+        // Vérifie si le joueur (à la position worldX, worldY) est dans une des zones de la liste
+        private bool EstDansZone(double worldX, double worldY, List<Rect> zones)
+        {
+            // On ramène la position monde (ex: 5024) à la position sur la tuile (ex: 24)
+            double localX = worldX % tailleTuile;
+            double localY = worldY % tailleTuile;
+            if (localX < 0) localX += tailleTuile;
+            if (localY < 0) localY += tailleTuile;
+
+            // On définit la Hitbox des PIEDS du joueur (130x130 -> petit carré en bas)
+            Rect pieds = new Rect(localX + 50, localY + 100, 30, 20);
+
+            foreach (var zone in zones)
+            {
+                if (pieds.IntersectsWith(zone)) return true;
+            }
+            return false;
+        }
+
         private void GererStamina()
         {
             if (isRunning && (goUp || goDown || goLeft || goRight))
             {
                 stamina -= 0.5;
-                if (stamina <= 0)
-                {
-                    stamina = 0;
-                    canRun = false;
-                    isRunning = false;
-                }
+                if (stamina <= 0) { stamina = 0; canRun = false; isRunning = false; }
             }
             else
             {
-                if (stamina < 100)
-                {
-                    stamina += 0.3;
-                    if (stamina >= 20) canRun = true;
-                }
+                if (stamina < 100) { stamina += 0.3; if (stamina >= 20) canRun = true; }
             }
             BarreStamina.Value = stamina;
             BarreStamina.Foreground = canRun ? Brushes.Orange : Brushes.Gray;
         }
 
-        // --- LOGIQUE DES VAGUES ---
         private void GererVaguesEtSpawns()
         {
             if (isWaveFinishedMessage)
@@ -246,7 +294,6 @@ namespace SandSurvival
                     isCountingDown = false;
                     isWaveActive = true;
                     GridCompteARebours.Visibility = Visibility.Collapsed;
-
                     if (isSurvivalMode) GridSurvie.Visibility = Visibility.Visible;
                 }
                 return;
@@ -256,13 +303,8 @@ namespace SandSurvival
             {
                 if (!isSurvivalMode)
                 {
-                    int maxSimultanes = 1; // Un seul ennemi à la fois pour l'instant
-
-                    if (enemiesSpawnedInWave < enemiesToKillTotal && GetActiveEnemiesCount() < maxSimultanes)
-                    {
-                        SpawnEnemy();
-                    }
-
+                    int maxSimultanes = 1;
+                    if (enemiesSpawnedInWave < enemiesToKillTotal && GetActiveEnemiesCount() < maxSimultanes) SpawnEnemy();
                     if (enemiesKilledInWave >= enemiesToKillTotal)
                     {
                         isWaveActive = false;
@@ -274,13 +316,8 @@ namespace SandSurvival
                 }
                 else
                 {
-                    // MODE SURVIE
                     spawnTimer -= 0.016;
-                    if (spawnTimer <= 0)
-                    {
-                        if (enemies.Count < 20) SpawnEnemy();
-                        spawnTimer = 2.0;
-                    }
+                    if (spawnTimer <= 0) { if (enemies.Count < 20) SpawnEnemy(); spawnTimer = 2.0; }
                 }
             }
         }
@@ -292,15 +329,17 @@ namespace SandSurvival
             return count;
         }
 
-        // --- CRÉATION D'ENNEMI ---
         private void SpawnEnemy()
         {
             enemiesSpawnedInWave++;
 
             Ennemi newEnemy = new Ennemi();
             newEnemy.Sprite = new Image();
+
+            // TAILLE REMISE À 130
             newEnemy.Sprite.Width = 130;
             newEnemy.Sprite.Height = 130;
+
             newEnemy.Sprite.Source = mummySprites[0];
             newEnemy.Sprite.RenderTransformOrigin = new Point(0.5, 0.5);
             newEnemy.Scale = new ScaleTransform();
@@ -340,7 +379,6 @@ namespace SandSurvival
             enemies.Add(newEnemy);
         }
 
-        // --- GESTION ENNEMIS ---
         private void UpdateEnemies(double playerX, double playerY)
         {
             for (int i = enemies.Count - 1; i >= 0; i--)
@@ -374,8 +412,12 @@ namespace SandSurvival
                 if (dist > 10)
                 {
                     double speed = 6;
-                    eX += (diffX / dist) * speed;
-                    eY += (diffY / dist) * speed;
+                    double nextEX = eX + (diffX / dist) * speed;
+                    double nextEY = eY + (diffY / dist) * speed;
+
+                    // Les ennemis sont aussi bloqués par les murs (optionnel, plus réaliste)
+                    if (!EstDansZone(nextEX, eY, obstaclesSolides)) eX = nextEX;
+                    if (!EstDansZone(eX, nextEY, obstaclesSolides)) eY = nextEY;
 
                     ennemi.FrameCounter++;
                     if (ennemi.FrameCounter > 5)
@@ -403,8 +445,8 @@ namespace SandSurvival
                 Canvas.SetLeft(ennemi.HealthBar, eX + 25);
                 Canvas.SetTop(ennemi.HealthBar, eY - 15);
 
-                Rect rPlayer = new Rect(playerX + 40, playerY + 40, Player.Width - 80, Player.Height - 80);
-                Rect rEnemy = new Rect(eX + 40, eY + 40, ennemi.Sprite.Width - 80, ennemi.Sprite.Height - 80);
+                Rect rPlayer = new Rect(playerX + 40, playerY + 40, 50, 50);
+                Rect rEnemy = new Rect(eX + 40, eY + 40, 50, 50);
 
                 if (rPlayer.IntersectsWith(rEnemy))
                 {
@@ -432,7 +474,6 @@ namespace SandSurvival
             }
         }
 
-        // --- INPUTS ---
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (!isAttacking && attackSprites.Count > 0)
@@ -499,13 +540,7 @@ namespace SandSurvival
         private void CreerTuile(int gridX, int gridY, string key)
         {
             Image tuile = new Image();
-            int seed = gridX * 73856093 ^ gridY * 19349663;
-            Random rnd = new Random(seed);
-
-            // --- ON CHOISIT AU HASARD PARMI LES 4 FONDS ---
-            int index = rnd.Next(0, solTextures.Count);
-            tuile.Source = solTextures[index];
-
+            tuile.Source = solTextures[0];
             tuile.Width = tailleTuile + 2; tuile.Height = tailleTuile + 2; tuile.Stretch = Stretch.Fill;
             Canvas.SetLeft(tuile, (gridX * tailleTuile) - 1); Canvas.SetTop(tuile, (gridY * tailleTuile) - 1);
             Panel.SetZIndex(tuile, 0);
