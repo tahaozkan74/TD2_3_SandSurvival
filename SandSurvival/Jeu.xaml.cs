@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -31,7 +32,7 @@ namespace SandSurvival
         // VITESSE & STAMINA
         private bool isRunning = false;
         private double walkSpeed = 4;
-        private double runSpeed = 7;
+        private double runSpeed = 6.5;
         private double stamina = 100;
         private bool canRun = true;
 
@@ -72,12 +73,10 @@ namespace SandSurvival
         private int frameCounter = 0;
         private int frameDelay = 5;
 
-        // --- MAP & COLLISIONS ---
-        private List<Rect> zonesEauLocales = new List<Rect>(); // Zones d'eau sur UNE tuile
+        // --- MAP ---
+        // REMOVED: zonesEauLocales
 
         // Configuration de la Map 3x3
-        // Une tuile fait 1024. On en met 3 en largeur, 3 en hauteur.
-        // De -1024 à +2048
         private double mapMinX = -1024;
         private double mapMaxX = 2048; // 1024 * 2
         private double mapMinY = -1024;
@@ -104,8 +103,7 @@ namespace SandSurvival
 
             // Map étendue (3x3 images)
             InitExtendedMap();
-            // Définition de l'eau sur le motif de base
-            InitZonesEau();
+            // REMOVED: InitZonesEau();
 
             BarreDeVie.Value = vieJoueur;
             BarreStamina.Value = stamina;
@@ -128,7 +126,6 @@ namespace SandSurvival
             if (fondTexture == null) return;
 
             // On crée une grille de 3x3 images pour agrandir la map
-            // x va de -1 à 1, y va de -1 à 1
             for (int x = -1; x <= 1; x++)
             {
                 for (int y = -1; y <= 1; y++)
@@ -148,17 +145,7 @@ namespace SandSurvival
             }
         }
 
-        private void InitZonesEau()
-        {
-            // On définit où est l'eau sur L'IMAGE DE BASE (0 à 1024)
-            // Le code s'occupera d'appliquer ça à toutes les copies de la map
-
-            // Le grand lac en bas à droite (selon ta photo)
-            zonesEauLocales.Add(new Rect(550, 600, 350, 250));
-
-            // La rivière en haut à gauche (selon ta photo)
-            zonesEauLocales.Add(new Rect(0, 0, 350, 400));
-        }
+        // REMOVED: InitZonesEau()
 
         private void LoadAssets()
         {
@@ -235,8 +222,7 @@ namespace SandSurvival
             double currentX = Canvas.GetLeft(Player);
             double currentY = Canvas.GetTop(Player);
 
-            // Ralentissement EAU : Seulement le joueur
-            if (EstSurEau(currentX, currentY)) baseSpeed = baseSpeed / 2.5; // Ralentissement fort
+            // REMOVED: Ralentissement EAU
 
             double nextX = currentX;
             double nextY = currentY;
@@ -248,10 +234,8 @@ namespace SandSurvival
             if (goRight) { nextX += baseSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
 
             // --- LIMITES DE LA MAP ---
-            // On bloque le joueur entre les limites de la map 3x3
-            // mapMinX = -1024, mapMaxX = 2048 (car 2*1024)
             if (nextX < mapMinX) nextX = mapMinX;
-            if (nextX > mapMaxX - 60) nextX = mapMaxX - 60; // -60 pour la largeur du joueur
+            if (nextX > mapMaxX - 60) nextX = mapMaxX - 60;
             if (nextY < mapMinY) nextY = mapMinY;
             if (nextY > mapMaxY - 60) nextY = mapMaxY - 60;
 
@@ -276,26 +260,7 @@ namespace SandSurvival
             GererAnimationJoueur(isMoving);
         }
 
-        // --- SYSTEME INTELLIGENT EAU ---
-        // Vérifie si le joueur est sur l'eau, peu importe sur quelle copie de la map il est
-        private bool EstSurEau(double worldX, double worldY)
-        {
-            // On ramène la coordonnée Monde (ex: 1500) en coordonnée Locale (0 à 1024)
-            // L'opérateur % en C# peut renvoyer du négatif, on corrige ça.
-            double localX = worldX % 1024;
-            double localY = worldY % 1024;
-            if (localX < 0) localX += 1024;
-            if (localY < 0) localY += 1024;
-
-            // Hitbox pieds
-            Rect pieds = new Rect(localX + 20, localY + 50, 20, 10);
-
-            foreach (var zone in zonesEauLocales)
-            {
-                if (pieds.IntersectsWith(zone)) return true;
-            }
-            return false;
-        }
+        // REMOVED: EstSurEau(double worldX, double worldY)
 
         private void GererAnimationMortJoueur()
         {
@@ -337,23 +302,20 @@ namespace SandSurvival
             if (kitSprite == null) return;
 
             Random rnd = new Random();
-            // Spawn n'importe où dans la grande map 3x3
             double kX = rnd.Next((int)mapMinX + 100, (int)mapMaxX - 100);
             double kY = rnd.Next((int)mapMinY + 100, (int)mapMaxY - 100);
 
-            // On vérifie juste qu'on ne spawn pas dans l'eau pour être sympa
-            if (!EstSurEau(kX, kY))
-            {
-                Image kit = new Image();
-                kit.Source = kitSprite;
-                kit.Width = 30;
-                kit.Height = 30;
-                Canvas.SetLeft(kit, kX);
-                Canvas.SetTop(kit, kY);
-                Panel.SetZIndex(kit, 5000);
-                MondeDeJeu.Children.Add(kit);
-                healthKits.Add(kit);
-            }
+            // REMOVED: Check EstSurEau
+
+            Image kit = new Image();
+            kit.Source = kitSprite;
+            kit.Width = 30;
+            kit.Height = 30;
+            Canvas.SetLeft(kit, kX);
+            Canvas.SetTop(kit, kY);
+            Panel.SetZIndex(kit, 5000);
+            MondeDeJeu.Children.Add(kit);
+            healthKits.Add(kit);
         }
 
         private void GererRamassageKits()
@@ -417,8 +379,7 @@ namespace SandSurvival
 
                 if (dist > 10)
                 {
-                    // Vitesse momie constante (elles ne sont PAS ralenties par l'eau)
-                    double speed = 4.5;
+                    double speed = 4.5; // Vitesse momie conservée
 
                     double nextEX = eX + (diffX / dist) * speed;
                     double nextEY = eY + (diffY / dist) * speed;
@@ -646,3 +607,8 @@ namespace SandSurvival
         private void Button_Reessayer_Click(object s, RoutedEventArgs e) { Jeu j = new Jeu(); j.Show(); this.Close(); }
     }
 }
+
+
+
+
+
