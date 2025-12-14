@@ -19,12 +19,15 @@
         <Canvas x:Name="EcranPrincipal" ClipToBounds="True">
             <Canvas x:Name="MondeDeJeu">
                 <Canvas.RenderTransform>
-                    <TranslateTransform x:Name="Camera" X="0" Y="0"/>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="2.5" ScaleY="2.5"/>
+                        <TranslateTransform x:Name="Camera" X="0" Y="0"/>
+                    </TransformGroup>
                 </Canvas.RenderTransform>
 
                 <Image x:Name="Player" 
                    Source="/Images/Player/walk0.png" 
-                   Width="130" Height="130" 
+                   Width="60" Height="60" 
                    Canvas.Left="0" Canvas.Top="0"
                    Panel.ZIndex="9999"
                    RenderTransformOrigin="0.5,0.5">

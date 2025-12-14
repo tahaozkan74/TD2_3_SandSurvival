@@ -10,6 +10,7 @@ using System.Windows.Threading;
 
 namespace SandSurvival
 {
+    // Classe simple pour gérer chaque Ennemi
     public class Ennemi
     {
         public Image Sprite { get; set; }
@@ -36,9 +37,7 @@ namespace SandSurvival
         private bool canRun = true;
 
         // --- COLLISIONS MAP ---
-        // Liste des rectangles infranchissables (Murs, Cactus)
         private List<Rect> obstaclesSolides = new List<Rect>();
-        // Liste des rectangles qui ralentissent (Eau)
         private List<Rect> zonesEau = new List<Rect>();
 
         // --- LISTE DES ENNEMIS ---
@@ -60,8 +59,6 @@ namespace SandSurvival
         private bool isAttacking = false;
         private int currentFrame = 0;
         private int frameCounter = 0;
-
-        // CORRECTION ERREUR : La variable manquante est ici !
         private int frameDelay = 5;
 
         // --- MAP INFINIE ---
@@ -88,8 +85,6 @@ namespace SandSurvival
         {
             InitializeComponent();
             LoadAssets();
-
-            // On initialise les murs et l'eau
             InitMapCollisions();
 
             BarreDeVie.Value = vieJoueur;
@@ -104,39 +99,28 @@ namespace SandSurvival
             this.Focus();
         }
 
-        // --- DEFINITION DES COLLISIONS (Basé sur fond.jpg) ---
+        // --- DEFINITION DES COLLISIONS ---
         private void InitMapCollisions()
         {
-            // Les coordonnées sont : X, Y, Largeur, Hauteur (sur l'image 1024x1024)
-
-            // 1. L'EAU (Ralentissement)
-            // La rivière en haut à gauche
+            // EAU
             zonesEau.Add(new Rect(0, 0, 350, 400));
-            // La piscine en bas à droite (Oasis)
             zonesEau.Add(new Rect(550, 600, 300, 200));
 
-            // 2. OBSTACLES SOLIDES (Murs / Cactus)
-            // Ruines en haut à droite
+            // SOLIDE (Murs/Cactus)
             obstaclesSolides.Add(new Rect(780, 50, 200, 200));
-
-            // Ruines en bas à gauche
             obstaclesSolides.Add(new Rect(20, 650, 200, 250));
-
-            // Ruines au milieu (arche cassée)
             obstaclesSolides.Add(new Rect(600, 300, 200, 150));
-
-            // Quelques cactus (approx)
-            obstaclesSolides.Add(new Rect(550, 50, 30, 80)); // Cactus haut
-            obstaclesSolides.Add(new Rect(260, 750, 30, 80)); // Cactus bas
-            obstaclesSolides.Add(new Rect(900, 700, 30, 80)); // Cactus droite
+            obstaclesSolides.Add(new Rect(550, 50, 30, 80));
+            obstaclesSolides.Add(new Rect(260, 750, 30, 80));
+            obstaclesSolides.Add(new Rect(900, 700, 30, 80));
         }
 
         private void LoadAssets()
         {
             try
             {
-                // Vérifie si ton image s'appelle fond.png ou fond.jpg ici !
-                solTextures.Add(new BitmapImage(new Uri("pack://application:,,,/Images/image de fond/fond.png"))); // J'ai mis .jpg vu tes fichiers
+                // Vérifie l'extension (.png ou .jpg) selon ton fichier réel
+                solTextures.Add(new BitmapImage(new Uri("pack://application:,,,/Images/image de fond/fond.png")));
 
                 for (int i = 0; i < 8; i++) walkSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/Player/walk{i}.png")));
                 for (int i = 1; i <= 3; i++) attackSprites.Add(new BitmapImage(new Uri($"pack://application:,,,/Images/Player/attaque{i}.png")));
@@ -149,14 +133,12 @@ namespace SandSurvival
             catch (Exception ex) { MessageBox.Show("Erreur Assets: " + ex.Message); }
         }
 
-        // --- CORRECTION ERREUR : La fonction SetupWave est bien là ---
         private void SetupWave(int waveNumber)
         {
             currentWave = waveNumber;
             enemiesKilledInWave = 0;
             enemiesSpawnedInWave = 0;
 
-            // Nettoyage
             foreach (var ennemi in enemies)
             {
                 MondeDeJeu.Children.Remove(ennemi.Sprite);
@@ -196,13 +178,12 @@ namespace SandSurvival
             double currentX = Canvas.GetLeft(Player);
             double currentY = Canvas.GetTop(Player);
 
-            // Si on est dans l'eau, on divise la vitesse par 2
             if (EstDansZone(currentX, currentY, zonesEau))
             {
                 baseSpeed = baseSpeed / 2;
             }
 
-            // 2. DÉPLACEMENT & COLLISIONS MURS
+            // 2. DÉPLACEMENT & COLLISIONS
             double nextX = currentX;
             double nextY = currentY;
             bool isMoving = false;
@@ -212,7 +193,6 @@ namespace SandSurvival
             if (goLeft) { nextX -= baseSpeed; isMoving = true; PlayerScale.ScaleX = -1; }
             if (goRight) { nextX += baseSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
 
-            // On vérifie si la PROCHAINE position touche un mur. Si non, on avance.
             if (!EstDansZone(nextX, currentY, obstaclesSolides)) currentX = nextX;
             if (!EstDansZone(currentX, nextY, obstaclesSolides)) currentY = nextY;
 
@@ -227,27 +207,31 @@ namespace SandSurvival
                 if (tempsInvulnerabilite <= 0) { estInvulnerable = false; Player.Opacity = 1; }
             }
 
+            // --- CAMÉRA AVEC ZOOM ---
+            // On calcule le centre de l'écran
             double screenCenterX = this.ActualWidth / 2;
             double screenCenterY = this.ActualHeight / 2;
-            Camera.X = screenCenterX - currentX - (Player.Width / 2);
-            Camera.Y = screenCenterY - currentY - (Player.Height / 2);
+
+            // Le facteur de zoom doit être identique à celui dans Jeu.xaml (ScaleTransform)
+            double zoom = 2.5;
+
+            // On ajuste la position de la caméra pour centrer le joueur malgré le zoom
+            Camera.X = screenCenterX - ((currentX + Player.Width / 2) * zoom);
+            Camera.Y = screenCenterY - ((currentY + Player.Height / 2) * zoom);
 
             MiseAJourMap(currentX, currentY);
             GererAnimationJoueur(isMoving);
         }
 
-        // --- SYSTEME DE COLLISION ---
-        // Vérifie si le joueur (à la position worldX, worldY) est dans une des zones de la liste
         private bool EstDansZone(double worldX, double worldY, List<Rect> zones)
         {
-            // On ramène la position monde (ex: 5024) à la position sur la tuile (ex: 24)
             double localX = worldX % tailleTuile;
             double localY = worldY % tailleTuile;
             if (localX < 0) localX += tailleTuile;
             if (localY < 0) localY += tailleTuile;
 
-            // On définit la Hitbox des PIEDS du joueur (130x130 -> petit carré en bas)
-            Rect pieds = new Rect(localX + 50, localY + 100, 30, 20);
+            // Hitbox des pieds (pour 60x60 -> décalage ~25, ~50)
+            Rect pieds = new Rect(localX + 20, localY + 50, 20, 10);
 
             foreach (var zone in zones)
             {
@@ -336,9 +320,9 @@ namespace SandSurvival
             Ennemi newEnemy = new Ennemi();
             newEnemy.Sprite = new Image();
 
-            // TAILLE REMISE À 130
-            newEnemy.Sprite.Width = 130;
-            newEnemy.Sprite.Height = 130;
+            // Taille 60 pour le zoom
+            newEnemy.Sprite.Width = 60;
+            newEnemy.Sprite.Height = 60;
 
             newEnemy.Sprite.Source = mummySprites[0];
             newEnemy.Sprite.RenderTransformOrigin = new Point(0.5, 0.5);
@@ -347,8 +331,8 @@ namespace SandSurvival
             Panel.SetZIndex(newEnemy.Sprite, 9998);
 
             newEnemy.HealthBar = new ProgressBar();
-            newEnemy.HealthBar.Width = 80;
-            newEnemy.HealthBar.Height = 10;
+            newEnemy.HealthBar.Width = 40;
+            newEnemy.HealthBar.Height = 5;
             newEnemy.HealthBar.Foreground = Brushes.Red;
             newEnemy.HealthBar.Background = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0));
             newEnemy.HealthBar.BorderBrush = Brushes.Black;
@@ -370,8 +354,8 @@ namespace SandSurvival
 
             Canvas.SetLeft(newEnemy.Sprite, spawnX);
             Canvas.SetTop(newEnemy.Sprite, spawnY);
-            Canvas.SetLeft(newEnemy.HealthBar, spawnX + 25);
-            Canvas.SetTop(newEnemy.HealthBar, spawnY - 15);
+            Canvas.SetLeft(newEnemy.HealthBar, spawnX + 10);
+            Canvas.SetTop(newEnemy.HealthBar, spawnY - 10);
 
             MondeDeJeu.Children.Add(newEnemy.Sprite);
             MondeDeJeu.Children.Add(newEnemy.HealthBar);
@@ -415,7 +399,6 @@ namespace SandSurvival
                     double nextEX = eX + (diffX / dist) * speed;
                     double nextEY = eY + (diffY / dist) * speed;
 
-                    // Les ennemis sont aussi bloqués par les murs (optionnel, plus réaliste)
                     if (!EstDansZone(nextEX, eY, obstaclesSolides)) eX = nextEX;
                     if (!EstDansZone(eX, nextEY, obstaclesSolides)) eY = nextEY;
 
@@ -442,11 +425,12 @@ namespace SandSurvival
 
                 Canvas.SetLeft(ennemi.Sprite, eX);
                 Canvas.SetTop(ennemi.Sprite, eY);
-                Canvas.SetLeft(ennemi.HealthBar, eX + 25);
-                Canvas.SetTop(ennemi.HealthBar, eY - 15);
+                Canvas.SetLeft(ennemi.HealthBar, eX + 10);
+                Canvas.SetTop(ennemi.HealthBar, eY - 10);
 
-                Rect rPlayer = new Rect(playerX + 40, playerY + 40, 50, 50);
-                Rect rEnemy = new Rect(eX + 40, eY + 40, 50, 50);
+                // Hitbox Momie (réduite)
+                Rect rPlayer = new Rect(playerX + 15, playerY + 15, 30, 30);
+                Rect rEnemy = new Rect(eX + 15, eY + 15, 30, 30);
 
                 if (rPlayer.IntersectsWith(rEnemy))
                 {
@@ -483,18 +467,19 @@ namespace SandSurvival
                 frameCounter = 0;
                 Player.Source = attackSprites[0];
 
-                double pX = Canvas.GetLeft(Player) + 65;
-                double pY = Canvas.GetTop(Player) + 65;
+                // Centre Joueur (30 car taille 60)
+                double pX = Canvas.GetLeft(Player) + 30;
+                double pY = Canvas.GetTop(Player) + 30;
 
                 foreach (var ennemi in enemies)
                 {
                     if (ennemi.IsDead || ennemi.IsDying) continue;
 
-                    double eX = Canvas.GetLeft(ennemi.Sprite) + 65;
-                    double eY = Canvas.GetTop(ennemi.Sprite) + 65;
+                    double eX = Canvas.GetLeft(ennemi.Sprite) + 30;
+                    double eY = Canvas.GetTop(ennemi.Sprite) + 30;
                     double dist = Math.Sqrt(Math.Pow(pX - eX, 2) + Math.Pow(pY - eY, 2));
 
-                    if (dist < 120)
+                    if (dist < 80)
                     {
                         ennemi.HP--;
                         ennemi.HealthBar.Value = ennemi.HP;
