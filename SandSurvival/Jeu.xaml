@@ -6,10 +6,13 @@
         xmlns:local="clr-namespace:SandSurvival"
         mc:Ignorable="d"
         Title="Sand Survival - Desert" Height="720" Width="1280"
+        Icon ="Images\image de fond\icon.ico"
         WindowStartupLocation="CenterScreen"
         WindowState="Maximized"
         KeyDown="Window_KeyDown" KeyUp="Window_KeyUp"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        MouseRightButtonDown="Window_MouseRightButtonDown" 
+        MouseRightButtonUp="Window_MouseRightButtonUp"
         RenderOptions.BitmapScalingMode="NearestNeighbor"
         SnapsToDevicePixels="True"
         UseLayoutRounding="True">
@@ -49,35 +52,24 @@
                 </Button.Resources>
             </Button>
 
-            <ProgressBar x:Name="BarreDeVie" 
-                         Width="300" Height="30" 
-                         Value="100" Maximum="100" 
-                         Canvas.Left="20" Canvas.Top="20"
-                         Foreground="Green" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
+            <ProgressBar x:Name="BarreDeVie" Width="300" Height="30" Value="100" Maximum="100" Canvas.Left="20" Canvas.Top="20" Foreground="Green" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
             <TextBlock Text="SANTÉ" Canvas.Left="30" Canvas.Top="24" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
 
-            <ProgressBar x:Name="BarreStamina" 
-                         Width="250" Height="15" 
-                         Value="100" Maximum="100" 
-                         Canvas.Left="20" Canvas.Top="60"
-                         Foreground="Orange" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
+            <ProgressBar x:Name="BarreStamina" Width="250" Height="15" Value="100" Maximum="100" Canvas.Left="20" Canvas.Top="60" Foreground="Orange" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
             <TextBlock Text="ENDURANCE" FontSize="10" Canvas.Left="30" Canvas.Top="61" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
+
+            <ProgressBar x:Name="BarreBouclier" Width="200" Height="10" Value="100" Maximum="100" Canvas.Left="20" Canvas.Top="85" Foreground="Cyan" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
+            <TextBlock Text="BOUCLIER" FontSize="8" Canvas.Left="30" Canvas.Top="85" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
         </Canvas>
 
-        <Grid x:Name="GridCompteARebours" 
-              VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0"
-              IsHitTestVisible="False">
+        <Grid x:Name="GridCompteARebours" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0" IsHitTestVisible="False">
             <StackPanel HorizontalAlignment="Center">
-                <TextBlock x:Name="TexteAnnonceVague" Text="LA VAGUE 1 VA COMMENCER DANS" 
-                           FontFamily="Segoe UI Black" FontSize="40" Foreground="#8B4513" 
-                           TextAlignment="Center" Margin="0,0,0,10">
+                <TextBlock x:Name="TexteAnnonceVague" Text="LA VAGUE 1 VA COMMENCER DANS" FontFamily="Segoe UI Black" FontSize="40" Foreground="#8B4513" TextAlignment="Center" Margin="0,0,0,10">
                     <TextBlock.Effect>
                         <DropShadowEffect Color="White" ShadowDepth="0" BlurRadius="5" Opacity="1"/>
                     </TextBlock.Effect>
                 </TextBlock>
-                <TextBlock x:Name="TexteChrono" Text="10" 
-                           FontFamily="Segoe UI Black" FontSize="100" Foreground="Red" 
-                           TextAlignment="Center">
+                <TextBlock x:Name="TexteChrono" Text="10" FontFamily="Segoe UI Black" FontSize="100" Foreground="Red" TextAlignment="Center">
                     <TextBlock.Effect>
                         <DropShadowEffect Color="Black" ShadowDepth="5" BlurRadius="2" Opacity="0.5"/>
                     </TextBlock.Effect>
@@ -85,20 +77,15 @@
             </StackPanel>
         </Grid>
 
-        <Grid x:Name="GridVagueFinie" Visibility="Collapsed"
-              VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0"
-              IsHitTestVisible="False">
-            <TextBlock x:Name="TexteFinVague" Text="VAGUE 1 TERMINÉE" 
-                       FontFamily="Segoe UI Black" FontSize="60" Foreground="#228B22" 
-                       TextAlignment="Center">
+        <Grid x:Name="GridVagueFinie" Visibility="Collapsed" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0" IsHitTestVisible="False">
+            <TextBlock x:Name="TexteFinVague" Text="VAGUE 1 TERMINÉE" FontFamily="Segoe UI Black" FontSize="60" Foreground="#228B22" TextAlignment="Center">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="White" ShadowDepth="0" BlurRadius="5" Opacity="1"/>
                 </TextBlock.Effect>
             </TextBlock>
         </Grid>
 
-        <Grid x:Name="GridSurvie" Visibility="Collapsed"
-              VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,50,0,0" IsHitTestVisible="False">
+        <Grid x:Name="GridSurvie" Visibility="Collapsed" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,50,0,0" IsHitTestVisible="False">
             <TextBlock Text="SURVIVEZ !" FontFamily="Segoe UI Black" FontSize="70" Foreground="DarkRed">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="Red" ShadowDepth="0" BlurRadius="20" Opacity="0.8"/>
