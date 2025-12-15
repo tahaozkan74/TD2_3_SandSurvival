@@ -1,149 +1,130 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media; // Nécessaire pour le son (MediaPlayer)
-using System.Windows.Media.Animation; // Nécessaire pour l'animation des crédits
+using System.Windows.Media;
+using System.Windows.Threading; // Nécessaire pour le Timer
 
 namespace SandSurvival
 {
     public partial class MainWindow : Window
     {
-        // On crée le lecteur de musique
-        private MediaPlayer player = new MediaPlayer();
+        public static double MusicVolume = 0.5;
+
+        // Touches par défaut
+        public static System.Windows.Input.Key InputUp = System.Windows.Input.Key.Z;
+        public static System.Windows.Input.Key InputDown = System.Windows.Input.Key.S;
+        public static System.Windows.Input.Key InputLeft = System.Windows.Input.Key.Q;
+        public static System.Windows.Input.Key InputRight = System.Windows.Input.Key.D;
+
+        private MediaPlayer musicPlayer = new MediaPlayer();
+
+        // Timer pour les crédits
+        private DispatcherTimer creditTimer = new DispatcherTimer();
 
         public MainWindow()
         {
             InitializeComponent();
-
-            // On lance la musique dès le démarrage
             LancerMusique();
+
+            if (this.FindName("SliderVolume") is Slider slider) slider.Value = MusicVolume;
+
+            // Configuration du Timer des crédits (60 FPS environ)
+            creditTimer.Interval = TimeSpan.FromMilliseconds(16);
+            creditTimer.Tick += CreditAnimation_Tick;
         }
 
         private void LancerMusique()
         {
             try
             {
-                // Charge le fichier musique
-                // Assure-toi que "Audio/desert_theme.mp3" existe bien et est en "Contenu" / "Copier si plus récent"
-                player.Open(new Uri("P:\\SAE - 1.01\\SandSurvival-11-12-25\\SandSurvival\\Audio\\BLACK OPS 2 ZOMBIES OFFICIAL Theme Song.mp3", UriKind.Relative));
-
-                // Volume initial (correspond à la valeur par défaut du Slider)
-                player.Volume = 0.5;
-
-                player.Play();
-
-                // Boucle infinie pour la musique (quand ça finit, ça recommence)
-                player.MediaEnded += (sender, e) =>
-                {
-                    player.Position = TimeSpan.Zero;
-                    player.Play();
-                };
+                musicPlayer.Open(new Uri("Audio/BLACK OPS 2 ZOMBIES OFFICIAL Theme Song.mp3", UriKind.Relative));
+                musicPlayer.MediaEnded += (s, e) => { musicPlayer.Position = TimeSpan.Zero; musicPlayer.Play(); };
+                musicPlayer.Volume = MusicVolume;
+                musicPlayer.Play();
             }
-            catch (Exception ex)
+            catch { }
+        }
+
+        // --- ANIMATION CRÉDITS ---
+        private void CreditAnimation_Tick(object sender, EventArgs e)
+        {
+            if (this.FindName("StackPanelCredit") is StackPanel sp)
             {
-                // Si le fichier n'est pas trouvé, on affiche une erreur sans faire planter le jeu
-                MessageBox.Show("Erreur Audio : " + ex.Message);
+                double currentTop = Canvas.GetTop(sp);
+
+                // Si pas défini, on commence en bas
+                if (double.IsNaN(currentTop)) currentTop = 600;
+
+                // On fait monter le texte
+                currentTop -= 3.0;
+
+                // Si le texte est trop haut, on le remet en bas pour boucler
+                if (currentTop < -sp.ActualHeight) currentTop = this.ActualHeight;
+
+                Canvas.SetTop(sp, currentTop);
             }
         }
 
-        // ==========================================
-        // 1. BOUTONS PRINCIPAUX (Menu)
-        // ==========================================
+        // --- BOUTONS ---
 
         private void Button_Jouer_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Créer la fenêtre du jeu
-            Jeu fenetreJeu = new Jeu();
-            // 2. L'afficher
-            fenetreJeu.Show();
-            // 3. Fermer le menu actuel
+            musicPlayer.Stop();
+            Jeu j = new Jeu();
+            j.Show();
             this.Close();
         }
 
         private void Button_Quitter_Click(object sender, RoutedEventArgs e)
         {
-            // Ferme complètement l'application
             Application.Current.Shutdown();
         }
 
+        // Paramètres
         private void Button_Parametre_Click(object sender, RoutedEventArgs e)
         {
-            GridParametres.Visibility = Visibility.Visible;
+            if (this.FindName("GridParametres") is Grid g) g.Visibility = Visibility.Visible;
         }
 
-        // ==========================================
-        // 2. GESTION DES RÈGLES
-        // ==========================================
+        private void Button_FermerParametre_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.FindName("GridParametres") is Grid g) g.Visibility = Visibility.Collapsed;
+        }
 
+        private void SliderVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            MusicVolume = e.NewValue;
+            musicPlayer.Volume = MusicVolume;
+        }
+
+        // Règles
         private void Button_Regles_Click(object sender, RoutedEventArgs e)
         {
-            GridRegles.Visibility = Visibility.Visible;
+            if (this.FindName("GridRegles") is Grid g) g.Visibility = Visibility.Visible;
         }
 
         private void Button_FermerRegles_Click(object sender, RoutedEventArgs e)
         {
-            GridRegles.Visibility = Visibility.Collapsed;
+            if (this.FindName("GridRegles") is Grid g) g.Visibility = Visibility.Collapsed;
         }
 
-        // ==========================================
-        // 3. GESTION DES CRÉDITS (Responsive)
-        // ==========================================
-
+        // Crédits (Avec lancement du Timer)
         private void Button_Credit_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Afficher l'écran
-            GridCredit.Visibility = Visibility.Visible;
+            if (this.FindName("GridCredit") is Grid g) g.Visibility = Visibility.Visible;
 
-            // 2. FORCER LE CALCUL DES TAILLES (UpdateLayout)
-            // C'est crucial pour le responsive : on oblige WPF à calculer la taille du texte maintenant
-            GridCredit.UpdateLayout();
-
-            // 3. Calculer les distances dynamiquement
-            double hauteurTexte = StackPanelCredit.ActualHeight;
-            double hauteurEcran = this.ActualHeight;
-
-            // 4. Configurer l'animation
-            DoubleAnimation animation = new DoubleAnimation();
-
-            // Départ : Tout en bas de l'écran
-            animation.From = hauteurEcran;
-
-            // Arrivée : On remonte de toute la hauteur du texte (pour qu'il sorte totalement de l'écran)
-            animation.To = -hauteurTexte;
-
-            // Durée : 15 secondes (vitesse de lecture confortable)
-            animation.Duration = new Duration(TimeSpan.FromSeconds(15));
-
-            // Répétition infinie
-            animation.RepeatBehavior = RepeatBehavior.Forever;
-
-            // 5. Lancer l'animation sur la position verticale (Canvas.Top)
-            StackPanelCredit.BeginAnimation(Canvas.TopProperty, animation);
+            // On reset la position du texte et on lance l'animation
+            if (this.FindName("StackPanelCredit") is StackPanel sp)
+            {
+                Canvas.SetTop(sp, 600); // Commence en bas
+                creditTimer.Start();
+            }
         }
 
         private void Button_FermerCredit_Click(object sender, RoutedEventArgs e)
         {
-            // Cacher l'écran
-            GridCredit.Visibility = Visibility.Collapsed;
-
-            // Arrêter l'animation proprement (sinon elle continue de tourner en fond)
-            StackPanelCredit.BeginAnimation(Canvas.TopProperty, null);
-        }
-
-        // ==========================================
-        // 4. GESTION DU VOLUME (Paramètres)
-        // ==========================================
-
-        private void Button_FermerParametre_Click(object sender, RoutedEventArgs e)
-        {
-            GridParametres.Visibility = Visibility.Collapsed;
-        }
-
-        // Se déclenche quand on bouge le curseur de volume
-        private void SliderVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            // Met à jour le volume du lecteur de musique en temps réel
-            player.Volume = e.NewValue;
+            if (this.FindName("GridCredit") is Grid g) g.Visibility = Visibility.Collapsed;
+            creditTimer.Stop(); // On arrête l'animation pour économiser les ressources
         }
     }
 }

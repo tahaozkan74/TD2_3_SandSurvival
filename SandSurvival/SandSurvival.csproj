@@ -32,6 +32,7 @@
     <None Remove="Images\mommy\meurt3.png" />
     <None Remove="Images\mommy\meurt4.png" />
     <None Remove="Images\mommy\meurt5.png" />
+    <None Remove="Images\mommy\rightlook.png" />
     <None Remove="Images\Player\attaque1.png" />
     <None Remove="Images\Player\attaque2.png" />
     <None Remove="Images\Player\attaque3.png" />
@@ -42,6 +43,7 @@
     <None Remove="Images\Player\mort1.png" />
     <None Remove="Images\Player\mort2.png" />
     <None Remove="Images\Player\mort3.png" />
+    <None Remove="Images\Player\Thumbs.db" />
     <None Remove="Images\Player\walk0.png" />
     <None Remove="Images\Player\walk1.png" />
     <None Remove="Images\Player\walk2.png" />
@@ -122,6 +124,9 @@
     <Resource Include="Images\mommy\meurt5.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\mommy\rightlook.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\Objets\soin.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
@@ -154,6 +159,9 @@
     </Resource>
     <Resource Include="Images\Player\mort3.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Player\Thumbs.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Player\walk0.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

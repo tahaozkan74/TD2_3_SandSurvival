@@ -1,14 +1,10 @@
 ﻿<Window x:Class="SandSurvival.Jeu"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SandSurvival"
-        mc:Ignorable="d"
         Title="Sand Survival - Desert" Height="720" Width="1280"
-        Icon ="Images\image de fond\icon.ico"
-        WindowStartupLocation="CenterScreen"
-        WindowState="Maximized"
+        WindowState="Maximized" 
+        WindowStyle="None"
+        ResizeMode="NoResize"
         KeyDown="Window_KeyDown" KeyUp="Window_KeyUp"
         MouseLeftButtonDown="Window_MouseLeftButtonDown"
         MouseRightButtonDown="Window_MouseRightButtonDown" 
@@ -29,11 +25,11 @@
                 </Canvas.RenderTransform>
 
                 <Image x:Name="Player" 
-                   Source="/Images/Player/walk0.png" 
-                   Width="60" Height="60" 
-                   Canvas.Left="0" Canvas.Top="0"
-                   Panel.ZIndex="9999"
-                   RenderTransformOrigin="0.5,0.5">
+                       Source="/Images/Player/walk0.png" 
+                       Width="60" Height="60" 
+                       Canvas.Left="0" Canvas.Top="0"
+                       Panel.ZIndex="999"
+                       RenderTransformOrigin="0.5,0.5">
                     <Image.RenderTransform>
                         <ScaleTransform x:Name="PlayerScale" ScaleX="1"/>
                     </Image.RenderTransform>
@@ -42,9 +38,9 @@
             </Canvas>
         </Canvas>
 
-        <Canvas>
-            <Button Click="Button_Menu_Click" Canvas.Right="20" Canvas.Top="20" Width="140" Height="50" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="4" Panel.ZIndex="10000">
-                <TextBlock Text="MENU" FontFamily="Segoe UI Black" FontSize="20" Foreground="#8B4513"/>
+        <Canvas Panel.ZIndex="2000">
+            <Button Click="Button_Pause_Click" Canvas.Right="20" Canvas.Top="20" Width="140" Height="50" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="4">
+                <TextBlock Text="PAUSE" FontFamily="Segoe UI Black" FontSize="20" Foreground="#8B4513"/>
                 <Button.Resources>
                     <Style TargetType="Border">
                         <Setter Property="CornerRadius" Value="10"/>
@@ -62,14 +58,14 @@
             <TextBlock Text="BOUCLIER" FontSize="8" Canvas.Left="30" Canvas.Top="85" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
         </Canvas>
 
-        <Grid x:Name="GridCompteARebours" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0" IsHitTestVisible="False">
+        <Grid x:Name="GridCompteARebours" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0" IsHitTestVisible="False" Panel.ZIndex="2000">
             <StackPanel HorizontalAlignment="Center">
                 <TextBlock x:Name="TexteAnnonceVague" Text="LA VAGUE 1 VA COMMENCER DANS" FontFamily="Segoe UI Black" FontSize="40" Foreground="#8B4513" TextAlignment="Center" Margin="0,0,0,10">
                     <TextBlock.Effect>
                         <DropShadowEffect Color="White" ShadowDepth="0" BlurRadius="5" Opacity="1"/>
                     </TextBlock.Effect>
                 </TextBlock>
-                <TextBlock x:Name="TexteChrono" Text="10" FontFamily="Segoe UI Black" FontSize="100" Foreground="Red" TextAlignment="Center">
+                <TextBlock x:Name="TexteChrono" Text="5" FontFamily="Segoe UI Black" FontSize="100" Foreground="Red" TextAlignment="Center">
                     <TextBlock.Effect>
                         <DropShadowEffect Color="Black" ShadowDepth="5" BlurRadius="2" Opacity="0.5"/>
                     </TextBlock.Effect>
@@ -77,7 +73,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid x:Name="GridVagueFinie" Visibility="Collapsed" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0" IsHitTestVisible="False">
+        <Grid x:Name="GridVagueFinie" Visibility="Collapsed" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0" IsHitTestVisible="False" Panel.ZIndex="2000">
             <TextBlock x:Name="TexteFinVague" Text="VAGUE 1 TERMINÉE" FontFamily="Segoe UI Black" FontSize="60" Foreground="#228B22" TextAlignment="Center">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="White" ShadowDepth="0" BlurRadius="5" Opacity="1"/>
@@ -85,7 +81,7 @@
             </TextBlock>
         </Grid>
 
-        <Grid x:Name="GridSurvie" Visibility="Collapsed" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,50,0,0" IsHitTestVisible="False">
+        <Grid x:Name="GridSurvie" Visibility="Collapsed" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,50,0,0" IsHitTestVisible="False" Panel.ZIndex="2000">
             <TextBlock Text="SURVIVEZ !" FontFamily="Segoe UI Black" FontSize="70" Foreground="DarkRed">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="Red" ShadowDepth="0" BlurRadius="20" Opacity="0.8"/>
@@ -93,7 +89,37 @@
             </TextBlock>
         </Grid>
 
-        <Grid x:Name="GridGameOver" Visibility="Collapsed" Panel.ZIndex="20000" Background="Black">
+        <Grid x:Name="GridPause" Visibility="Collapsed" Panel.ZIndex="5000" Background="#99000000">
+            <Border Width="450" Height="500" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="5" CornerRadius="20">
+                <StackPanel VerticalAlignment="Center" Margin="20">
+                    <TextBlock Text="PAUSE" FontFamily="Segoe UI Black" FontSize="40" Foreground="#8B4513" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                    <TextBlock Text="VOLUME MUSIQUE" FontFamily="Segoe UI Black" FontSize="16" Foreground="#5C3A21" HorizontalAlignment="Center"/>
+                    <Slider x:Name="PauseVolumeSlider" Width="250" Minimum="0" Maximum="1" ValueChanged="PauseVolumeSlider_ValueChanged" Margin="0,5,0,20"/>
+
+                    <TextBlock Text="VITESSE DU JOUEUR" FontFamily="Segoe UI Black" FontSize="16" Foreground="#5C3A21" HorizontalAlignment="Center"/>
+                    <Slider x:Name="SpeedSlider" Width="250" Minimum="2" Maximum="15" Value="6" ValueChanged="SpeedSlider_ValueChanged" Margin="0,5,0,30"/>
+
+                    <Button Content="RETOURNER AU JEU" Click="Button_Reprendre_Click" Width="250" Height="50" Margin="5" Background="#8B4513" Foreground="White" FontFamily="Segoe UI Black" FontSize="20">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+
+                    <Button Content="MENU PRINCIPAL" Click="Button_Menu_Click" Width="250" Height="50" Margin="5" Background="#DDB678" Foreground="#8B4513" FontFamily="Segoe UI Black" FontSize="20">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="10"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="GridGameOver" Visibility="Collapsed" Panel.ZIndex="5000" Background="Black">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <TextBlock Text="GAME OVER" FontFamily="Segoe UI Black" FontSize="90" Foreground="#FF3333" HorizontalAlignment="Center"/>
                 <Button Click="Button_Reessayer_Click" Content="RÉESSAYER" Width="300" Height="80" FontSize="40" FontFamily="Segoe UI Black" Margin="0,20"/>
