@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO; // Nécessaire pour gérer les fichiers
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -49,7 +49,6 @@ namespace SandSurvival
         private List<BitmapImage> attackSprites = new List<BitmapImage>();
         private List<BitmapImage> runSprites = new List<BitmapImage>();
         private List<BitmapImage> playerDeathSprites = new List<BitmapImage>();
-
         private BitmapImage blockSprite;
         private BitmapImage kitSprite;
         private BitmapImage fondTexture;
@@ -84,8 +83,12 @@ namespace SandSurvival
         {
             InitializeComponent();
 
-            // On charge les assets avec la nouvelle méthode "Fichier Physique"
             LoadAssets();
+
+            if (fondTexture == null)
+            {
+                // Message d'erreur géré dans LoadAssets
+            }
 
             InitExtendedMap();
             LancerMusiqueJeu();
@@ -94,11 +97,12 @@ namespace SandSurvival
             BarreStamina.Value = stamina;
             BarreBouclier.Value = shieldEnergy;
 
-            // Protection si MainWindow n'est pas encore chargé
+            // Initialisation des sliders
             try
             {
                 if (this.FindName("PauseVolumeSlider") is Slider v) v.Value = MainWindow.MusicVolume;
                 if (this.FindName("SpeedSlider") is Slider s) s.Value = walkSpeed;
+                if (this.FindName("DifficultySlider") is Slider d) d.Value = 3; // Difficulté de base
             }
             catch { }
 
@@ -129,36 +133,21 @@ namespace SandSurvival
             catch { }
         }
 
-        // --- NOUVEAU SYSTÈME DE CHARGEMENT ---
-        // Cette fonction crée un chemin d'accès réel vers le fichier sur ton disque dur
-        private BitmapImage ChargerImage(string cheminRelatif)
+        private BitmapImage ChargerImage(string relativePath)
         {
             try
             {
-                // Construit le chemin complet (ex: P:\...\bin\Debug\Images\Player\walk0.png)
-                string cheminComplet = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, cheminRelatif);
-
-                if (File.Exists(cheminComplet))
+                string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
+                if (File.Exists(fullPath))
                 {
-                    // On charge l'image depuis le fichier
-                    BitmapImage img = new BitmapImage();
-                    img.BeginInit();
-                    img.UriSource = new Uri(cheminComplet, UriKind.Absolute);
-                    img.CacheOption = BitmapCacheOption.OnLoad; // Important pour éviter les verrous de fichiers
-                    img.EndInit();
-                    return img;
+                    return new BitmapImage(new Uri(fullPath, UriKind.Absolute));
                 }
                 else
                 {
-                    // Si tu vois cette erreur, c'est que l'image n'est pas copiée dans le dossier de sortie
-                    // Vérifie l'étape 1 (Propriétés -> Copier si plus récent)
                     return null;
                 }
             }
-            catch
-            {
-                return null;
-            }
+            catch { return null; }
         }
 
         private void AjouterImage(List<BitmapImage> liste, string chemin)
@@ -202,9 +191,7 @@ namespace SandSurvival
                     fond.Source = fondTexture;
                     fond.Width = 1024; fond.Height = 1024; fond.Stretch = Stretch.Fill;
                     Canvas.SetLeft(fond, x * 1024); Canvas.SetTop(fond, y * 1024);
-
-                    // Z-Index négatif pour être sûr que c'est derrière le joueur
-                    Panel.SetZIndex(fond, -100);
+                    Panel.SetZIndex(fond, -999);
                     MondeDeJeu.Children.Insert(0, fond);
                 }
             }
@@ -319,7 +306,29 @@ namespace SandSurvival
         private void Window_MouseRightButtonDown(object sender, MouseButtonEventArgs e) { if (canBlock && !isPlayerDying && !isPaused) isBlocking = true; }
         private void Window_MouseRightButtonUp(object sender, MouseButtonEventArgs e) { isBlocking = false; }
         private void AnimateDeath(Ennemi e) { e.HealthBar.Visibility = Visibility.Collapsed; e.FrameCounter++; if (e.FrameCounter > 8) { e.FrameIndex++; if (e.FrameIndex >= mummyDeathSprites.Count) e.IsDying = false; else e.Sprite.Source = mummyDeathSprites[e.FrameIndex]; e.FrameCounter = 0; } }
-        private void SpawnEnemy() { enemiesSpawnedInWave++; Ennemi n = new Ennemi(); n.Sprite = new Image(); n.Sprite.Width = 60; n.Sprite.Height = 60; if (mummySprites.Count > 0) n.Sprite.Source = mummySprites[0]; else return; n.Sprite.RenderTransformOrigin = new Point(0.5, 0.5); n.Scale = new ScaleTransform(); n.Sprite.RenderTransform = n.Scale; Panel.SetZIndex(n.Sprite, 9998); n.HealthBar = new ProgressBar(); n.HealthBar.Width = 40; n.HealthBar.Height = 5; n.HealthBar.Foreground = Brushes.Red; n.HealthBar.Background = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0)); n.HealthBar.BorderBrush = Brushes.Black; n.HealthBar.BorderThickness = new Thickness(1); Panel.SetZIndex(n.HealthBar, 10000); if (isSurvivalMode) n.HP = 6; else n.HP = 3 + ((currentWave - 1) * 2); n.HealthBar.Maximum = n.HP; n.HealthBar.Value = n.HP; Random r = new Random(); double sX = r.Next((int)mapMinX + 100, (int)mapMaxX - 100); double sY = r.Next((int)mapMinY + 100, (int)mapMaxY - 100); Canvas.SetLeft(n.Sprite, sX); Canvas.SetTop(n.Sprite, sY); Canvas.SetLeft(n.HealthBar, sX + 10); Canvas.SetTop(n.HealthBar, sY - 10); MondeDeJeu.Children.Add(n.Sprite); MondeDeJeu.Children.Add(n.HealthBar); enemies.Add(n); }
+
+        // --- MODIFICATION ICI POUR LA DIFFICULTÉ ---
+        private void SpawnEnemy()
+        {
+            enemiesSpawnedInWave++;
+            Ennemi n = new Ennemi();
+            n.Sprite = new Image();
+            n.Sprite.Width = 60; n.Sprite.Height = 60;
+            if (mummySprites.Count > 0) n.Sprite.Source = mummySprites[0]; else return;
+            n.Sprite.RenderTransformOrigin = new Point(0.5, 0.5); n.Scale = new ScaleTransform(); n.Sprite.RenderTransform = n.Scale; Panel.SetZIndex(n.Sprite, 9998);
+            n.HealthBar = new ProgressBar(); n.HealthBar.Width = 40; n.HealthBar.Height = 5; n.HealthBar.Foreground = Brushes.Red; n.HealthBar.Background = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0)); n.HealthBar.BorderBrush = Brushes.Black; n.HealthBar.BorderThickness = new Thickness(1); Panel.SetZIndex(n.HealthBar, 10000);
+
+            // PRISE EN COMPTE DU SLIDER DIFFICULTÉ
+            // PV = Valeur du Slider + progression des vagues
+            int baseDifficulty = 3;
+            if (this.FindName("DifficultySlider") is Slider d) baseDifficulty = (int)d.Value;
+
+            if (isSurvivalMode) n.HP = baseDifficulty + 3; // Un peu plus dur en survie
+            else n.HP = baseDifficulty + ((currentWave - 1) * 2);
+
+            n.HealthBar.Maximum = n.HP; n.HealthBar.Value = n.HP;
+            Random r = new Random(); double sX = r.Next((int)mapMinX + 100, (int)mapMaxX - 100); double sY = r.Next((int)mapMinY + 100, (int)mapMaxY - 100); Canvas.SetLeft(n.Sprite, sX); Canvas.SetTop(n.Sprite, sY); Canvas.SetLeft(n.HealthBar, sX + 10); Canvas.SetTop(n.HealthBar, sY - 10); MondeDeJeu.Children.Add(n.Sprite); MondeDeJeu.Children.Add(n.HealthBar); enemies.Add(n);
+        }
 
         private void GererAnimationJoueur(bool m)
         {

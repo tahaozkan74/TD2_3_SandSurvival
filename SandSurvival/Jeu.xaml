@@ -90,15 +90,18 @@
         </Grid>
 
         <Grid x:Name="GridPause" Visibility="Collapsed" Panel.ZIndex="5000" Background="#99000000">
-            <Border Width="450" Height="500" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="5" CornerRadius="20">
+            <Border Width="450" Height="550" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="5" CornerRadius="20">
                 <StackPanel VerticalAlignment="Center" Margin="20">
                     <TextBlock Text="PAUSE" FontFamily="Segoe UI Black" FontSize="40" Foreground="#8B4513" HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
                     <TextBlock Text="VOLUME MUSIQUE" FontFamily="Segoe UI Black" FontSize="16" Foreground="#5C3A21" HorizontalAlignment="Center"/>
-                    <Slider x:Name="PauseVolumeSlider" Width="250" Minimum="0" Maximum="1" ValueChanged="PauseVolumeSlider_ValueChanged" Margin="0,5,0,20"/>
+                    <Slider x:Name="PauseVolumeSlider" Width="250" Minimum="0" Maximum="1" ValueChanged="PauseVolumeSlider_ValueChanged" Margin="0,5,0,15"/>
 
                     <TextBlock Text="VITESSE DU JOUEUR" FontFamily="Segoe UI Black" FontSize="16" Foreground="#5C3A21" HorizontalAlignment="Center"/>
-                    <Slider x:Name="SpeedSlider" Width="250" Minimum="2" Maximum="15" Value="6" ValueChanged="SpeedSlider_ValueChanged" Margin="0,5,0,30"/>
+                    <Slider x:Name="SpeedSlider" Width="250" Minimum="2" Maximum="15" Value="6" ValueChanged="SpeedSlider_ValueChanged" Margin="0,5,0,15"/>
+
+                    <TextBlock Text="DIFFICULTÉ (VIE ENNEMIS)" FontFamily="Segoe UI Black" FontSize="16" Foreground="#5C3A21" HorizontalAlignment="Center"/>
+                    <Slider x:Name="DifficultySlider" Width="250" Minimum="1" Maximum="20" Value="3" Margin="0,5,0,30" IsSnapToTickEnabled="True" TickFrequency="1"/>
 
                     <Button Content="RETOURNER AU JEU" Click="Button_Reprendre_Click" Width="250" Height="50" Margin="5" Background="#8B4513" Foreground="White" FontFamily="Segoe UI Black" FontSize="20">
                         <Button.Resources>
