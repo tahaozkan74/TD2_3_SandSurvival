@@ -16,6 +16,13 @@ namespace SandSurvival
         public static System.Windows.Input.Key InputLeft = System.Windows.Input.Key.Q;
         public static System.Windows.Input.Key InputRight = System.Windows.Input.Key.D;
 
+        // NOUVELLES TOUCHES
+        public static System.Windows.Input.Key InputSprint = System.Windows.Input.Key.LeftShift;
+        // Par défaut "None" car on utilise la souris, mais on peut configurer une touche (ex: Espace)
+        public static System.Windows.Input.Key InputAttack = System.Windows.Input.Key.None;
+        public static System.Windows.Input.Key InputBlock = System.Windows.Input.Key.None;
+
+
         private MediaPlayer musicPlayer = new MediaPlayer();
 
         // Timer pour les crédits
@@ -126,5 +133,53 @@ namespace SandSurvival
             if (this.FindName("GridCredit") is Grid g) g.Visibility = Visibility.Collapsed;
             creditTimer.Stop(); // On arrête l'animation pour économiser les ressources
         }
+
+        // --- GESTION DU REBIND DES TOUCHES ---
+
+        private Button currentBindButton = null; // Bouton en cours de modification
+        private string currentBindAction = "";   // Action en cours (UP, DOWN, etc.)
+
+        private void BtnBind_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn)
+            {
+                currentBindButton = btn;
+                currentBindAction = btn.Tag.ToString(); // Récupère UP, DOWN, LEFT ou RIGHT
+
+                // Visuel pour dire "Appuie sur une touche"
+                btn.Content = "...";
+                btn.Background = Brushes.LightGreen;
+
+                // On écoute la prochaine touche pressée sur la fenêtre
+                this.KeyDown += MainWindow_KeyDown_Rebind;
+            }
+        }
+
+        private void MainWindow_KeyDown_Rebind(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            this.KeyDown -= MainWindow_KeyDown_Rebind; // Arrêter l'écoute
+
+            if (currentBindButton != null)
+            {
+                // Mise à jour de la variable correspondante
+                switch (currentBindAction)
+                {
+                    case "UP": InputUp = e.Key; break;
+                    case "DOWN": InputDown = e.Key; break;
+                    case "LEFT": InputLeft = e.Key; break;
+                    case "RIGHT": InputRight = e.Key; break;
+                    case "SPRINT": InputSprint = e.Key; break;
+                    case "ATTACK": InputAttack = e.Key; break;
+                    case "BLOCK": InputBlock = e.Key; break;
+                }
+
+                currentBindButton.Content = e.Key.ToString();
+
+                var converter = new System.Windows.Media.BrushConverter();
+                currentBindButton.Background = (Brush)converter.ConvertFromString("#DDB678");
+                currentBindButton = null;
+            }
+        }
+
     }
 }

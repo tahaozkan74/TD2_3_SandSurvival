@@ -9,7 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Audio\AttaqueEffect.mp4" />
     <None Remove="Audio\BLACK OPS 2 ZOMBIES OFFICIAL Theme Song.mp3" />
+    <None Remove="Audio\Bloque.mp4" />
+    <None Remove="Audio\Degat.mp4" />
+    <None Remove="Audio\MomieAttaque.mp4" />
+    <None Remove="Audio\MomieDeath.mp4" />
+    <None Remove="Audio\MortPerso.mp4" />
     <None Remove="Images\BOUTON\buttonCredit.png" />
     <None Remove="Images\BOUTON\buttonJouer.png" />
     <None Remove="Images\BOUTON\buttonParametre.png" />
@@ -55,7 +61,25 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Audio\AttaqueEffect.mp4">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Audio\BLACK OPS 2 ZOMBIES OFFICIAL Theme Song.mp3">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Audio\Bloque.mp4">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Audio\Degat.mp4">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Audio\MomieAttaque.mp4">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Audio\MomieDeath.mp4">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Audio\MortPerso.mp4">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Resource Include="Images\BOUTON\buttonCredit.png">

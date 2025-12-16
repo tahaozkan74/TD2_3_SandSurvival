@@ -49,6 +49,7 @@ namespace SandSurvival
         private List<BitmapImage> attackSprites = new List<BitmapImage>();
         private List<BitmapImage> runSprites = new List<BitmapImage>();
         private List<BitmapImage> playerDeathSprites = new List<BitmapImage>();
+
         private BitmapImage blockSprite;
         private BitmapImage kitSprite;
         private BitmapImage fondTexture;
@@ -84,25 +85,24 @@ namespace SandSurvival
             InitializeComponent();
 
             LoadAssets();
-
-            if (fondTexture == null)
-            {
-                // Message d'erreur géré dans LoadAssets
-            }
-
             InitExtendedMap();
-            LancerMusiqueJeu();
+
+            this.Loaded += (s, e) =>
+            {
+                LancerMusiqueJeu();
+                if (this.FindName("CalqueCollisions") is Canvas c) c.Visibility = Visibility.Collapsed;
+            };
 
             BarreDeVie.Value = vieJoueur;
             BarreStamina.Value = stamina;
             BarreBouclier.Value = shieldEnergy;
 
-            // Initialisation des sliders
+            // Init Sliders
             try
             {
                 if (this.FindName("PauseVolumeSlider") is Slider v) v.Value = MainWindow.MusicVolume;
                 if (this.FindName("SpeedSlider") is Slider s) s.Value = walkSpeed;
-                if (this.FindName("DifficultySlider") is Slider d) d.Value = 3; // Difficulté de base
+                if (this.FindName("DifficultySlider") is Slider d) d.Value = 3;
             }
             catch { }
 
@@ -133,27 +133,31 @@ namespace SandSurvival
             catch { }
         }
 
+        private void JouerEffetSonore(string nomFichier)
+        {
+            try
+            {
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Audio", nomFichier);
+                if (File.Exists(path))
+                {
+                    MediaPlayer sfx = new MediaPlayer();
+                    sfx.Open(new Uri(path, UriKind.Absolute));
+                    sfx.Volume = MainWindow.MusicVolume;
+                    sfx.Play();
+                }
+            }
+            catch { }
+        }
+
         private BitmapImage ChargerImage(string relativePath)
         {
             try
             {
                 string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
-                if (File.Exists(fullPath))
-                {
-                    return new BitmapImage(new Uri(fullPath, UriKind.Absolute));
-                }
-                else
-                {
-                    return null;
-                }
+                if (File.Exists(fullPath)) return new BitmapImage(new Uri(fullPath, UriKind.Absolute));
+                else return null;
             }
             catch { return null; }
-        }
-
-        private void AjouterImage(List<BitmapImage> liste, string chemin)
-        {
-            BitmapImage img = ChargerImage(chemin);
-            if (img != null) liste.Add(img);
         }
 
         private void LoadAssets()
@@ -246,19 +250,29 @@ namespace SandSurvival
             double baseSpeed = (isRunning && canRun) ? runSpeed : walkSpeed;
             double currentX = Canvas.GetLeft(Player);
             double currentY = Canvas.GetTop(Player);
-            double nextX = currentX;
-            double nextY = currentY;
+
+            double potentialX = currentX;
+            double potentialY = currentY;
             bool isMoving = false;
 
-            if (goUp) { nextY -= baseSpeed; isMoving = true; }
-            if (goDown) { nextY += baseSpeed; isMoving = true; }
-            if (goLeft) { nextX -= baseSpeed; isMoving = true; PlayerScale.ScaleX = -1; }
-            if (goRight) { nextX += baseSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
+            if (goUp) { potentialY -= baseSpeed; isMoving = true; }
+            if (goDown) { potentialY += baseSpeed; isMoving = true; }
+            if (goLeft) { potentialX -= baseSpeed; isMoving = true; PlayerScale.ScaleX = -1; }
+            if (goRight) { potentialX += baseSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
 
-            if (nextX < mapMinX) nextX = mapMinX;
-            if (nextX > mapMaxX - 60) nextX = mapMaxX - 60;
-            if (nextY < mapMinY) nextY = mapMinY;
-            if (nextY > mapMaxY - 60) nextY = mapMaxY - 60;
+            // GESTION COLLISION LIMITES MAP
+            double nextX = currentX;
+            double nextY = currentY;
+
+            if (potentialX >= mapMinX && potentialX <= mapMaxX - 60)
+            {
+                nextX = potentialX;
+            }
+
+            if (potentialY >= mapMinY && potentialY <= mapMaxY - 60)
+            {
+                nextY = potentialY;
+            }
 
             Canvas.SetLeft(Player, nextX);
             Canvas.SetTop(Player, nextY);
@@ -268,14 +282,19 @@ namespace SandSurvival
             if (estInvulnerable)
             {
                 tempsInvulnerabilite--;
-                if (tempsInvulnerabilite <= 0) { estInvulnerable = false; Player.Opacity = 1; }
+                if (tempsInvulnerabilite <= 0)
+                {
+                    estInvulnerable = false;
+                    Player.Opacity = 1;
+                }
             }
 
             double zoom = 2.5;
             double screenCenterX = this.ActualWidth / 2;
             double screenCenterY = this.ActualHeight / 2;
-            if (screenCenterX == 0) screenCenterX = 600;
-            if (screenCenterY == 0) screenCenterY = 400;
+
+            if (screenCenterX <= 1) screenCenterX = 600;
+            if (screenCenterY <= 1) screenCenterY = 400;
 
             Camera.X = screenCenterX - ((nextX + Player.Width / 2) * zoom);
             Camera.Y = screenCenterY - ((nextY + Player.Height / 2) * zoom);
@@ -285,69 +304,626 @@ namespace SandSurvival
 
         private void GererVaguesEtSpawns()
         {
-            if (isWaveFinishedMessage) { messageTimer -= 0.016; if (messageTimer <= 0) { isWaveFinishedMessage = false; GridVagueFinie.Visibility = Visibility.Collapsed; SetupWave(currentWave + 1); } return; }
-            if (isCountingDown) { waveCountdown -= 0.016; TexteChrono.Text = Math.Ceiling(waveCountdown).ToString(); if (waveCountdown <= 0) { isCountingDown = false; isWaveActive = true; GridCompteARebours.Visibility = Visibility.Collapsed; if (isSurvivalMode) GridSurvie.Visibility = Visibility.Visible; } return; }
+            if (isWaveFinishedMessage)
+            {
+                messageTimer -= 0.016;
+                if (messageTimer <= 0)
+                {
+                    isWaveFinishedMessage = false;
+                    GridVagueFinie.Visibility = Visibility.Collapsed;
+                    SetupWave(currentWave + 1);
+                }
+                return;
+            }
+
+            if (isCountingDown)
+            {
+                waveCountdown -= 0.016;
+                TexteChrono.Text = Math.Ceiling(waveCountdown).ToString();
+                if (waveCountdown <= 0)
+                {
+                    isCountingDown = false;
+                    isWaveActive = true;
+                    GridCompteARebours.Visibility = Visibility.Collapsed;
+                    if (isSurvivalMode) GridSurvie.Visibility = Visibility.Visible;
+                }
+                return;
+            }
+
             if (isWaveActive)
             {
-                if (!isSurvivalMode) { int max = 1; if (enemiesSpawnedInWave < enemiesToKillTotal && GetActiveEnemiesCount() < max) SpawnEnemy(); if (enemiesKilledInWave >= enemiesToKillTotal) { isWaveActive = false; TexteFinVague.Text = "VAGUE " + currentWave + " TERMINÉE"; GridVagueFinie.Visibility = Visibility.Visible; isWaveFinishedMessage = true; messageTimer = 5.0; } }
-                else { spawnTimer -= 0.016; if (spawnTimer <= 0) { if (enemies.Count < 20) SpawnEnemy(); spawnTimer = 2.0; } }
+                if (!isSurvivalMode)
+                {
+                    int max = 1;
+                    if (enemiesSpawnedInWave < enemiesToKillTotal && GetActiveEnemiesCount() < max)
+                        SpawnEnemy();
+
+                    if (enemiesKilledInWave >= enemiesToKillTotal)
+                    {
+                        isWaveActive = false;
+                        TexteFinVague.Text = "VAGUE " + currentWave + " TERMINÉE";
+                        GridVagueFinie.Visibility = Visibility.Visible;
+                        isWaveFinishedMessage = true;
+                        messageTimer = 5.0;
+                    }
+                }
+                else
+                {
+                    spawnTimer -= 0.016;
+                    if (spawnTimer <= 0)
+                    {
+                        if (enemies.Count < 20)
+                            SpawnEnemy();
+                        spawnTimer = 2.0;
+                    }
+                }
             }
         }
 
-        private int GetActiveEnemiesCount() { int c = 0; foreach (var e in enemies) if (!e.IsDead && !e.IsDying) c++; return c; }
-        private void GererStamina() { if (isRunning && (goUp || goDown || goLeft || goRight)) { stamina -= 0.5; if (stamina <= 0) { stamina = 0; canRun = false; isRunning = false; } } else { if (stamina < 100) { stamina += 0.3; if (stamina >= 20) canRun = true; } } BarreStamina.Value = stamina; BarreStamina.Foreground = canRun ? Brushes.Orange : Brushes.Gray; }
-        private void GererAnimationMortJoueur() { frameCounter++; if (frameCounter > 15) { if (currentFrame < playerDeathSprites.Count) { Player.Source = playerDeathSprites[currentFrame]; currentFrame++; } else { gameTimer.Stop(); GridGameOver.Visibility = Visibility.Visible; } frameCounter = 0; } }
-        private void GererBouclier() { if (isBlocking && canBlock) { shieldEnergy -= 0.5; if (shieldEnergy <= 0) { shieldEnergy = 0; canBlock = false; isBlocking = false; } } else { if (shieldEnergy < 100) { shieldEnergy += 0.2; if (shieldEnergy >= 20) canBlock = true; } } BarreBouclier.Value = shieldEnergy; }
-        private void SpawnHealthKit() { if (healthKits.Count > 0) return; if (kitSprite == null) return; Random rnd = new Random(); double kX = rnd.Next((int)mapMinX + 100, (int)mapMaxX - 100); double kY = rnd.Next((int)mapMinY + 100, (int)mapMaxY - 100); Image kit = new Image(); kit.Source = kitSprite; kit.Width = 30; kit.Height = 30; Canvas.SetLeft(kit, kX); Canvas.SetTop(kit, kY); Panel.SetZIndex(kit, 5000); MondeDeJeu.Children.Add(kit); healthKits.Add(kit); }
-        private void GererRamassageKits() { double pX = Canvas.GetLeft(Player); double pY = Canvas.GetTop(Player); Rect rPlayer = new Rect(pX + 15, pY + 15, 30, 30); for (int i = healthKits.Count - 1; i >= 0; i--) { Image kit = healthKits[i]; double kX = Canvas.GetLeft(kit); double kY = Canvas.GetTop(kit); Rect rKit = new Rect(kX, kY, 30, 30); if (rPlayer.IntersectsWith(rKit)) { vieJoueur += 30; if (vieJoueur > 100) vieJoueur = 100; BarreDeVie.Value = vieJoueur; MondeDeJeu.Children.Remove(kit); healthKits.RemoveAt(i); } } }
-        private void UpdateEnemies(double playerX, double playerY) { for (int i = enemies.Count - 1; i >= 0; i--) { var ennemi = enemies[i]; if (ennemi.IsDead && !ennemi.IsDying) { MondeDeJeu.Children.Remove(ennemi.Sprite); MondeDeJeu.Children.Remove(ennemi.HealthBar); enemies.RemoveAt(i); enemiesKilledInWave++; if (isSurvivalMode) { survivalKillsCounter++; if (survivalKillsCounter >= 5) { SpawnHealthKit(); survivalKillsCounter = 0; } } continue; } if (ennemi.IsDying) { AnimateDeath(ennemi); continue; } double eX = Canvas.GetLeft(ennemi.Sprite); double eY = Canvas.GetTop(ennemi.Sprite); double diffX = playerX - eX; double diffY = playerY - eY; double dist = Math.Sqrt(diffX * diffX + diffY * diffY); if (diffX > 0) ennemi.Scale.ScaleX = -1; else ennemi.Scale.ScaleX = 1; if (dist > 10) { double speed = 4.5; double nextEX = eX + (diffX / dist) * speed; double nextEY = eY + (diffY / dist) * speed; eX = nextEX; eY = nextEY; ennemi.FrameCounter++; if (ennemi.FrameCounter > 5) { ennemi.FrameIndex++; if (ennemi.FrameIndex >= mummySprites.Count) ennemi.FrameIndex = 0; ennemi.Sprite.Source = mummySprites[ennemi.FrameIndex]; ennemi.FrameCounter = 0; } } else { ennemi.FrameCounter++; if (ennemi.FrameCounter > 3) { ennemi.FrameIndex++; if (ennemi.FrameIndex >= mummyAttackSprites.Count) ennemi.FrameIndex = 0; if (mummyAttackSprites.Count > 0) ennemi.Sprite.Source = mummyAttackSprites[ennemi.FrameIndex]; ennemi.FrameCounter = 0; } } Canvas.SetLeft(ennemi.Sprite, eX); Canvas.SetTop(ennemi.Sprite, eY); Canvas.SetLeft(ennemi.HealthBar, eX + 10); Canvas.SetTop(ennemi.HealthBar, eY - 10); Rect rPlayer = new Rect(playerX + 15, playerY + 15, 30, 30); Rect rEnemy = new Rect(eX + 15, eY + 15, 30, 30); if (rPlayer.IntersectsWith(rEnemy)) PrendreDegats(10); } }
-        private void PrendreDegats(int degats) { if (isPlayerDying) return; if (estInvulnerable) return; if (isBlocking) { shieldEnergy -= 5; estInvulnerable = true; tempsInvulnerabilite = 30; return; } vieJoueur -= degats; if (vieJoueur < 0) vieJoueur = 0; BarreDeVie.Value = vieJoueur; Player.Opacity = 0.5; estInvulnerable = true; tempsInvulnerabilite = 120; if (vieJoueur <= 0) { isPlayerDying = true; currentFrame = 0; frameCounter = 0; if (playerDeathSprites.Count > 0) Player.Source = playerDeathSprites[0]; } }
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { if (isPlayerDying || isPaused) return; if (!isAttacking && attackSprites.Count > 0) { isAttacking = true; currentFrame = 0; frameCounter = 0; Player.Source = attackSprites[0]; double pX = Canvas.GetLeft(Player) + 30; double pY = Canvas.GetTop(Player) + 30; foreach (var ennemi in enemies) { if (ennemi.IsDead || ennemi.IsDying) continue; double eX = Canvas.GetLeft(ennemi.Sprite) + 30; double eY = Canvas.GetTop(ennemi.Sprite) + 30; double dist = Math.Sqrt(Math.Pow(pX - eX, 2) + Math.Pow(pY - eY, 2)); if (dist < 80) { ennemi.HP--; ennemi.HealthBar.Value = ennemi.HP; ennemi.Sprite.Opacity = 0.5; DispatcherTimer t = new DispatcherTimer(); t.Interval = TimeSpan.FromMilliseconds(100); Ennemi target = ennemi; t.Tick += (s, args) => { if (!target.IsDying) target.Sprite.Opacity = 1; t.Stop(); }; t.Start(); if (ennemi.HP <= 0) { ennemi.IsDead = true; ennemi.IsDying = true; ennemi.FrameIndex = 0; if (mummyDeathSprites.Count > 0) ennemi.Sprite.Source = mummyDeathSprites[0]; } } } } }
-        private void Window_MouseRightButtonDown(object sender, MouseButtonEventArgs e) { if (canBlock && !isPlayerDying && !isPaused) isBlocking = true; }
-        private void Window_MouseRightButtonUp(object sender, MouseButtonEventArgs e) { isBlocking = false; }
-        private void AnimateDeath(Ennemi e) { e.HealthBar.Visibility = Visibility.Collapsed; e.FrameCounter++; if (e.FrameCounter > 8) { e.FrameIndex++; if (e.FrameIndex >= mummyDeathSprites.Count) e.IsDying = false; else e.Sprite.Source = mummyDeathSprites[e.FrameIndex]; e.FrameCounter = 0; } }
+        private int GetActiveEnemiesCount()
+        {
+            int c = 0;
+            foreach (var e in enemies)
+            {
+                if (!e.IsDead && !e.IsDying)
+                    c++;
+            }
+            return c;
+        }
 
-        // --- MODIFICATION ICI POUR LA DIFFICULTÉ ---
+        private void GererStamina()
+        {
+            if (isRunning && (goUp || goDown || goLeft || goRight))
+            {
+                stamina -= 0.5;
+                if (stamina <= 0)
+                {
+                    stamina = 0;
+                    canRun = false;
+                    isRunning = false;
+                }
+            }
+            else
+            {
+                if (stamina < 100)
+                {
+                    stamina += 0.3;
+                    if (stamina >= 20)
+                        canRun = true;
+                }
+            }
+            BarreStamina.Value = stamina;
+            BarreStamina.Foreground = canRun ? Brushes.Orange : Brushes.Gray;
+        }
+
+        private void GererAnimationMortJoueur()
+        {
+            frameCounter++;
+            if (frameCounter > 15)
+            {
+                if (currentFrame < playerDeathSprites.Count)
+                {
+                    Player.Source = playerDeathSprites[currentFrame];
+                    currentFrame++;
+                }
+                else
+                {
+                    gameTimer.Stop();
+                    GridGameOver.Visibility = Visibility.Visible;
+                }
+                frameCounter = 0;
+            }
+        }
+
+        private void GererBouclier()
+        {
+            if (isBlocking && canBlock)
+            {
+                shieldEnergy -= 0.5;
+                if (shieldEnergy <= 0)
+                {
+                    shieldEnergy = 0;
+                    canBlock = false;
+                    isBlocking = false;
+                }
+            }
+            else
+            {
+                if (shieldEnergy < 100)
+                {
+                    shieldEnergy += 0.2;
+                    if (shieldEnergy >= 20)
+                        canBlock = true;
+                }
+            }
+            BarreBouclier.Value = shieldEnergy;
+        }
+
+        private void SpawnHealthKit()
+        {
+            if (healthKits.Count > 0) return;
+            if (kitSprite == null) return;
+
+            Random rnd = new Random();
+            double kX = rnd.Next((int)mapMinX + 100, (int)mapMaxX - 100);
+            double kY = rnd.Next((int)mapMinY + 100, (int)mapMaxY - 100);
+
+            Image kit = new Image();
+            kit.Source = kitSprite;
+            kit.Width = 30;
+            kit.Height = 30;
+            Canvas.SetLeft(kit, kX);
+            Canvas.SetTop(kit, kY);
+            Panel.SetZIndex(kit, 5000);
+            MondeDeJeu.Children.Add(kit);
+            healthKits.Add(kit);
+        }
+
+        private void GererRamassageKits()
+        {
+            double pX = Canvas.GetLeft(Player);
+            double pY = Canvas.GetTop(Player);
+            Rect rPlayer = new Rect(pX + 15, pY + 15, 30, 30);
+
+            for (int i = healthKits.Count - 1; i >= 0; i--)
+            {
+                Image kit = healthKits[i];
+                double kX = Canvas.GetLeft(kit);
+                double kY = Canvas.GetTop(kit);
+                Rect rKit = new Rect(kX, kY, 30, 30);
+
+                if (rPlayer.IntersectsWith(rKit))
+                {
+                    vieJoueur += 30;
+                    if (vieJoueur > 100) vieJoueur = 100;
+                    BarreDeVie.Value = vieJoueur;
+                    MondeDeJeu.Children.Remove(kit);
+                    healthKits.RemoveAt(i);
+                }
+            }
+        }
+
+        private void UpdateEnemies(double playerX, double playerY)
+        {
+            for (int i = enemies.Count - 1; i >= 0; i--)
+            {
+                var ennemi = enemies[i];
+
+                if (ennemi.IsDead && !ennemi.IsDying)
+                {
+                    MondeDeJeu.Children.Remove(ennemi.Sprite);
+                    MondeDeJeu.Children.Remove(ennemi.HealthBar);
+                    enemies.RemoveAt(i);
+                    enemiesKilledInWave++;
+
+                    if (isSurvivalMode)
+                    {
+                        survivalKillsCounter++;
+                        if (survivalKillsCounter >= 5)
+                        {
+                            SpawnHealthKit();
+                            survivalKillsCounter = 0;
+                        }
+                    }
+                    continue;
+                }
+
+                if (ennemi.IsDying)
+                {
+                    AnimateDeath(ennemi);
+                    continue;
+                }
+
+                double eX = Canvas.GetLeft(ennemi.Sprite);
+                double eY = Canvas.GetTop(ennemi.Sprite);
+                double diffX = playerX - eX;
+                double diffY = playerY - eY;
+                double dist = Math.Sqrt(diffX * diffX + diffY * diffY);
+
+                if (diffX > 0) ennemi.Scale.ScaleX = -1; else ennemi.Scale.ScaleX = 1;
+
+                if (dist > 10)
+                {
+                    double speed = 5.5;
+                    double nextEX = eX + (diffX / dist) * speed;
+                    double nextEY = eY + (diffY / dist) * speed;
+                    eX = nextEX; eY = nextEY;
+
+                    ennemi.FrameCounter++;
+                    if (ennemi.FrameCounter > 5)
+                    {
+                        ennemi.FrameIndex++;
+                        if (ennemi.FrameIndex >= mummySprites.Count) ennemi.FrameIndex = 0;
+                        ennemi.Sprite.Source = mummySprites[ennemi.FrameIndex];
+                        ennemi.FrameCounter = 0;
+                    }
+                }
+                else
+                {
+                    ennemi.FrameCounter++;
+                    if (ennemi.FrameCounter > 3)
+                    {
+                        ennemi.FrameIndex++;
+                        if (ennemi.FrameIndex == 1)
+                        {
+                            JouerEffetSonore("MomieAttaque.mp4");
+                        }
+
+                        if (ennemi.FrameIndex >= mummyAttackSprites.Count)
+                            ennemi.FrameIndex = 0;
+
+                        if (mummyAttackSprites.Count > 0)
+                            ennemi.Sprite.Source = mummyAttackSprites[ennemi.FrameIndex];
+
+                        ennemi.FrameCounter = 0;
+                    }
+                }
+
+                Canvas.SetLeft(ennemi.Sprite, eX);
+                Canvas.SetTop(ennemi.Sprite, eY);
+                Canvas.SetLeft(ennemi.HealthBar, eX + 10);
+                Canvas.SetTop(ennemi.HealthBar, eY - 10);
+
+                Rect rPlayer = new Rect(playerX + 15, playerY + 15, 30, 30);
+                Rect rEnemy = new Rect(eX + 15, eY + 15, 30, 30);
+
+                if (rPlayer.IntersectsWith(rEnemy))
+                {
+                    PrendreDegats(10);
+                }
+            }
+        }
+
+        private void PrendreDegats(int degats)
+        {
+            if (isPlayerDying) return;
+            if (estInvulnerable) return;
+
+            if (isBlocking)
+            {
+                shieldEnergy -= 5;
+                estInvulnerable = true;
+                tempsInvulnerabilite = 30;
+                JouerEffetSonore("Bloque.mp4");
+                return;
+            }
+
+            vieJoueur -= degats;
+            if (vieJoueur < 0) vieJoueur = 0;
+            BarreDeVie.Value = vieJoueur;
+            Player.Opacity = 0.5;
+            estInvulnerable = true;
+            tempsInvulnerabilite = 120;
+
+            if (vieJoueur <= 0)
+            {
+                isPlayerDying = true;
+                JouerEffetSonore("MortPerso.mp4");
+                currentFrame = 0; frameCounter = 0;
+                if (playerDeathSprites.Count > 0) Player.Source = playerDeathSprites[0];
+            }
+            else
+            {
+                JouerEffetSonore("Degat.mp4");
+            }
+        }
+
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            TenterAttaque();
+        }
+
+        private void Window_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            CommencerBlocage();
+        }
+
+        private void Window_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            ArreterBlocage();
+        }
+
+        private void AnimateDeath(Ennemi e)
+        {
+            e.HealthBar.Visibility = Visibility.Collapsed;
+            e.FrameCounter++;
+            if (e.FrameCounter > 8)
+            {
+                e.FrameIndex++;
+                if (e.FrameIndex >= mummyDeathSprites.Count)
+                {
+                    e.IsDying = false;
+                }
+                else
+                {
+                    e.Sprite.Source = mummyDeathSprites[e.FrameIndex];
+                }
+                e.FrameCounter = 0;
+            }
+        }
+
+        // --- LOGIQUE DES ACTIONS (Clavier OU Souris) ---
+
+        private void CommencerBlocage()
+        {
+            if (canBlock && !isPlayerDying && !isPaused)
+            {
+                isBlocking = true;
+            }
+        }
+
+        private void ArreterBlocage()
+        {
+            isBlocking = false;
+        }
+
+        private void TenterAttaque()
+        {
+            if (isPlayerDying || isPaused) return;
+
+            // Si on n'est pas déjà en train d'attaquer
+            if (!isAttacking && attackSprites.Count > 0)
+            {
+                isAttacking = true;
+                currentFrame = 0;
+                frameCounter = 0;
+                Player.Source = attackSprites[0];
+                JouerEffetSonore("AttaqueEffect.mp4");
+
+                // --- CALCULE DE TOUCHÉ ---
+                double pX = Canvas.GetLeft(Player) + 30;
+                double pY = Canvas.GetTop(Player) + 30;
+
+                foreach (var ennemi in enemies)
+                {
+                    if (ennemi.IsDead || ennemi.IsDying) continue;
+
+                    double eX = Canvas.GetLeft(ennemi.Sprite) + 30;
+                    double eY = Canvas.GetTop(ennemi.Sprite) + 30;
+                    double dist = Math.Sqrt(Math.Pow(pX - eX, 2) + Math.Pow(pY - eY, 2));
+
+                    if (dist < 80)
+                    {
+                        ennemi.HP--;
+                        ennemi.HealthBar.Value = ennemi.HP;
+                        ennemi.Sprite.Opacity = 0.5;
+
+                        DispatcherTimer t = new DispatcherTimer();
+                        t.Interval = TimeSpan.FromMilliseconds(100);
+                        Ennemi target = ennemi;
+                        t.Tick += (s, args) =>
+                        {
+                            if (!target.IsDying) target.Sprite.Opacity = 1;
+                            t.Stop();
+                        };
+                        t.Start();
+
+                        if (ennemi.HP <= 0)
+                        {
+                            JouerEffetSonore("MomieDeath.mp4");
+                            ennemi.IsDead = true;
+                            ennemi.IsDying = true;
+                            ennemi.FrameIndex = 0;
+                            if (mummyDeathSprites.Count > 0)
+                                ennemi.Sprite.Source = mummyDeathSprites[0];
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         private void SpawnEnemy()
         {
             enemiesSpawnedInWave++;
             Ennemi n = new Ennemi();
             n.Sprite = new Image();
-            n.Sprite.Width = 60; n.Sprite.Height = 60;
-            if (mummySprites.Count > 0) n.Sprite.Source = mummySprites[0]; else return;
-            n.Sprite.RenderTransformOrigin = new Point(0.5, 0.5); n.Scale = new ScaleTransform(); n.Sprite.RenderTransform = n.Scale; Panel.SetZIndex(n.Sprite, 9998);
-            n.HealthBar = new ProgressBar(); n.HealthBar.Width = 40; n.HealthBar.Height = 5; n.HealthBar.Foreground = Brushes.Red; n.HealthBar.Background = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0)); n.HealthBar.BorderBrush = Brushes.Black; n.HealthBar.BorderThickness = new Thickness(1); Panel.SetZIndex(n.HealthBar, 10000);
+            n.Sprite.Width = 60;
+            n.Sprite.Height = 60;
 
-            // PRISE EN COMPTE DU SLIDER DIFFICULTÉ
-            // PV = Valeur du Slider + progression des vagues
+            if (mummySprites.Count > 0)
+                n.Sprite.Source = mummySprites[0];
+            else
+                return;
+
+            n.Sprite.RenderTransformOrigin = new Point(0.5, 0.5);
+            n.Scale = new ScaleTransform();
+            n.Sprite.RenderTransform = n.Scale;
+            Panel.SetZIndex(n.Sprite, 9998);
+
+            n.HealthBar = new ProgressBar();
+            n.HealthBar.Width = 40;
+            n.HealthBar.Height = 5;
+            n.HealthBar.Foreground = Brushes.Red;
+            n.HealthBar.Background = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0));
+            n.HealthBar.BorderBrush = Brushes.Black;
+            n.HealthBar.BorderThickness = new Thickness(1);
+            Panel.SetZIndex(n.HealthBar, 10000);
+
             int baseDifficulty = 3;
-            if (this.FindName("DifficultySlider") is Slider d) baseDifficulty = (int)d.Value;
+            if (this.FindName("DifficultySlider") is Slider d)
+                baseDifficulty = (int)d.Value;
 
-            if (isSurvivalMode) n.HP = baseDifficulty + 3; // Un peu plus dur en survie
-            else n.HP = baseDifficulty + ((currentWave - 1) * 2);
+            if (isSurvivalMode)
+                n.HP = baseDifficulty + 3;
+            else
+                n.HP = baseDifficulty + ((currentWave - 1) * 2);
 
-            n.HealthBar.Maximum = n.HP; n.HealthBar.Value = n.HP;
-            Random r = new Random(); double sX = r.Next((int)mapMinX + 100, (int)mapMaxX - 100); double sY = r.Next((int)mapMinY + 100, (int)mapMaxY - 100); Canvas.SetLeft(n.Sprite, sX); Canvas.SetTop(n.Sprite, sY); Canvas.SetLeft(n.HealthBar, sX + 10); Canvas.SetTop(n.HealthBar, sY - 10); MondeDeJeu.Children.Add(n.Sprite); MondeDeJeu.Children.Add(n.HealthBar); enemies.Add(n);
+            n.HealthBar.Maximum = n.HP;
+            n.HealthBar.Value = n.HP;
+
+            Random r = new Random();
+            double sX = r.Next((int)mapMinX + 100, (int)mapMaxX - 100);
+            double sY = r.Next((int)mapMinY + 100, (int)mapMaxY - 100);
+
+            Canvas.SetLeft(n.Sprite, sX);
+            Canvas.SetTop(n.Sprite, sY);
+            Canvas.SetLeft(n.HealthBar, sX + 10);
+            Canvas.SetTop(n.HealthBar, sY - 10);
+
+            MondeDeJeu.Children.Add(n.Sprite);
+            MondeDeJeu.Children.Add(n.HealthBar);
+            enemies.Add(n);
         }
 
         private void GererAnimationJoueur(bool m)
         {
             if (isPlayerDying) return;
-            // Sécurité : si liste vide, on ne fait rien
             if (walkSprites.Count == 0 || runSprites.Count == 0) return;
 
-            if (isAttacking && attackSprites.Count > 0) { frameCounter++; if (frameCounter > frameDelay) { currentFrame++; if (currentFrame >= attackSprites.Count) { isAttacking = false; currentFrame = 0; if (isBlocking && blockSprite != null) Player.Source = blockSprite; else if (walkSprites.Count > 0) Player.Source = walkSprites[0]; } else { Player.Source = attackSprites[currentFrame]; } frameCounter = 0; } return; }
-            if (isBlocking) { if (blockSprite != null) Player.Source = blockSprite; return; }
-            if (m) { List<BitmapImage> l = isRunning ? runSprites : walkSprites; frameDelay = isRunning ? 3 : 5; frameCounter++; if (frameCounter > frameDelay) { currentFrame++; if (currentFrame >= l.Count) currentFrame = 0; Player.Source = l[currentFrame]; frameCounter = 0; } }
+            if (isAttacking && attackSprites.Count > 0)
+            {
+                frameCounter++;
+                if (frameCounter > frameDelay)
+                {
+                    currentFrame++;
+                    if (currentFrame >= attackSprites.Count)
+                    {
+                        isAttacking = false;
+                        currentFrame = 0;
+                        if (isBlocking && blockSprite != null)
+                            Player.Source = blockSprite;
+                        else if (walkSprites.Count > 0)
+                            Player.Source = walkSprites[0];
+                    }
+                    else
+                    {
+                        Player.Source = attackSprites[currentFrame];
+                    }
+                    frameCounter = 0;
+                }
+                return;
+            }
+
+            if (isBlocking)
+            {
+                if (blockSprite != null)
+                    Player.Source = blockSprite;
+                return;
+            }
+
+            if (m)
+            {
+                List<BitmapImage> l = isRunning ? runSprites : walkSprites;
+                frameDelay = isRunning ? 3 : 5;
+                frameCounter++;
+                if (frameCounter > frameDelay)
+                {
+                    currentFrame++;
+                    if (currentFrame >= l.Count)
+                        currentFrame = 0;
+                    Player.Source = l[currentFrame];
+                    frameCounter = 0;
+                }
+            }
         }
 
-        private void Window_KeyDown(object s, KeyEventArgs e) { if (isPaused) return; if (e.Key == Key.Z) goUp = true; if (e.Key == Key.S) goDown = true; if (e.Key == Key.Q) goLeft = true; if (e.Key == Key.D) goRight = true; if (e.Key == Key.LeftShift) isRunning = true; }
-        private void Window_KeyUp(object s, KeyEventArgs e) { if (e.Key == Key.Z) goUp = false; if (e.Key == Key.S) goDown = false; if (e.Key == Key.Q) goLeft = false; if (e.Key == Key.D) goRight = false; if (e.Key == Key.LeftShift) isRunning = false; }
-        private void Button_Menu_Click(object s, RoutedEventArgs e) { gameTimer.Stop(); if (musicPlayer != null) musicPlayer.Stop(); MainWindow m = new MainWindow(); m.Show(); this.Close(); }
-        private void Button_Reessayer_Click(object s, RoutedEventArgs e) { if (musicPlayer != null) musicPlayer.Stop(); Jeu j = new Jeu(); j.Show(); this.Close(); }
-        private void Button_Pause_Click(object sender, RoutedEventArgs e) { isPaused = true; gameTimer.Stop(); if (this.FindName("GridPause") is Grid g) g.Visibility = Visibility.Visible; }
-        private void Button_Reprendre_Click(object sender, RoutedEventArgs e) { isPaused = false; if (this.FindName("GridPause") is Grid g) g.Visibility = Visibility.Collapsed; gameTimer.Start(); this.Focus(); }
-        private void PauseVolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) { if (musicPlayer != null) { musicPlayer.Volume = e.NewValue; MainWindow.MusicVolume = e.NewValue; } }
-        private void SpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) { walkSpeed = e.NewValue; runSpeed = walkSpeed * 1.6; }
+        private void Window_KeyDown(object s, KeyEventArgs e)
+        {
+            if (isPaused) return;
+
+            // Déplacement
+            if (e.Key == MainWindow.InputUp) goUp = true;
+            if (e.Key == MainWindow.InputDown) goDown = true;
+            if (e.Key == MainWindow.InputLeft) goLeft = true;
+            if (e.Key == MainWindow.InputRight) goRight = true;
+
+            // Sprint (Configurable)
+            if (e.Key == MainWindow.InputSprint) isRunning = true;
+
+            // Attaque (Si une touche clavier est configurée)
+            if (e.Key == MainWindow.InputAttack && MainWindow.InputAttack != Key.None)
+            {
+                TenterAttaque();
+            }
+
+            // Blocage (Si une touche clavier est configurée)
+            if (e.Key == MainWindow.InputBlock && MainWindow.InputBlock != Key.None)
+            {
+                CommencerBlocage();
+            }
+        }
+
+        private void Window_KeyUp(object s, KeyEventArgs e)
+        {
+            // Déplacement
+            if (e.Key == MainWindow.InputUp) goUp = false;
+            if (e.Key == MainWindow.InputDown) goDown = false;
+            if (e.Key == MainWindow.InputLeft) goLeft = false;
+            if (e.Key == MainWindow.InputRight) goRight = false;
+
+            // Sprint
+            if (e.Key == MainWindow.InputSprint) isRunning = false;
+
+            // Arrêt du blocage (Clavier)
+            if (e.Key == MainWindow.InputBlock)
+            {
+                ArreterBlocage();
+            }
+        }
+
+        private void Button_Menu_Click(object s, RoutedEventArgs e)
+        {
+            gameTimer.Stop();
+            if (musicPlayer != null) musicPlayer.Stop();
+            MainWindow m = new MainWindow();
+            m.Show();
+            this.Close();
+        }
+
+        private void Button_Reessayer_Click(object s, RoutedEventArgs e)
+        {
+            if (musicPlayer != null) musicPlayer.Stop();
+            Jeu j = new Jeu();
+            j.Show();
+            this.Close();
+        }
+
+        private void Button_Pause_Click(object sender, RoutedEventArgs e)
+        {
+            isPaused = true;
+            gameTimer.Stop();
+            if (this.FindName("GridPause") is Grid g)
+                g.Visibility = Visibility.Visible;
+        }
+
+        private void Button_Reprendre_Click(object sender, RoutedEventArgs e)
+        {
+            isPaused = false;
+            if (this.FindName("GridPause") is Grid g)
+                g.Visibility = Visibility.Collapsed;
+            gameTimer.Start();
+            this.Focus();
+        }
+
+        private void PauseVolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (musicPlayer != null)
+            {
+                musicPlayer.Volume = e.NewValue;
+                MainWindow.MusicVolume = e.NewValue;
+            }
+        }
+
+        private void SpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            walkSpeed = e.NewValue;
+            runSpeed = walkSpeed * 1.6;
+        }
     }
 }

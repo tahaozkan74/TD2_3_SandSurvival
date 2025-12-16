@@ -277,35 +277,44 @@
                     CornerRadius="10">
                     <Grid>
                         <StackPanel>
-                            <TextBlock
-                                Margin="0,0,0,30"
-                                HorizontalAlignment="Center"
-                                FontFamily="Segoe UI Black"
-                                FontSize="30"
-                                Foreground="#8B4513"
-                                Text="PARAMÈTRES" />
-                            <TextBlock
-                                Margin="0,0,0,10"
-                                HorizontalAlignment="Center"
-                                FontSize="20"
-                                FontWeight="Bold"
-                                Foreground="#5C3317"
-                                Text="Volume de la Musique" />
-                            <Slider
-                                x:Name="SliderVolume"
-                                Width="300"
-                                Margin="0,0,0,20"
-                                IsMoveToPointEnabled="True"
-                                Maximum="1"
-                                Minimum="0"
-                                ValueChanged="SliderVolume_ValueChanged"
-                                Value="0.5" />
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                FontSize="12"
-                                FontStyle="Italic"
-                                Foreground="#8B4513"
-                                Text="(Ajustez le curseur pour changer le volume)" />
+                            <TextBlock Margin="0,0,0,20" HorizontalAlignment="Center" FontFamily="Segoe UI Black" FontSize="30" Foreground="#8B4513" Text="PARAMÈTRES" />
+
+                            <TextBlock Margin="0,0,0,5" HorizontalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="#5C3317" Text="Volume Musique" />
+                            <Slider x:Name="SliderVolume" Width="250" Margin="0,0,0,15" IsMoveToPointEnabled="True" Maximum="1" Minimum="0" ValueChanged="SliderVolume_ValueChanged" Value="0.5" />
+
+                            <TextBlock Margin="0,0,0,10" HorizontalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="#5C3317" Text="Configuration des Touches" />
+
+                            <Grid Margin="0,2" Width="280">
+                                <TextBlock Text="Avancer :" VerticalAlignment="Center" Foreground="#5C3317" FontWeight="Bold"/>
+                                <Button x:Name="BtnBindUp" Content="Z" HorizontalAlignment="Right" Width="80" Height="25" Background="#DDB678" BorderBrush="#8B4513" Foreground="#5C3317" FontWeight="Bold" Click="BtnBind_Click" Tag="UP"/>
+                            </Grid>
+                            <Grid Margin="0,2" Width="280">
+                                <TextBlock Text="Reculer :" VerticalAlignment="Center" Foreground="#5C3317" FontWeight="Bold"/>
+                                <Button x:Name="BtnBindDown" Content="S" HorizontalAlignment="Right" Width="80" Height="25" Background="#DDB678" BorderBrush="#8B4513" Foreground="#5C3317" FontWeight="Bold" Click="BtnBind_Click" Tag="DOWN"/>
+                            </Grid>
+                            <Grid Margin="0,2" Width="280">
+                                <TextBlock Text="Gauche :" VerticalAlignment="Center" Foreground="#5C3317" FontWeight="Bold"/>
+                                <Button x:Name="BtnBindLeft" Content="Q" HorizontalAlignment="Right" Width="80" Height="25" Background="#DDB678" BorderBrush="#8B4513" Foreground="#5C3317" FontWeight="Bold" Click="BtnBind_Click" Tag="LEFT"/>
+                            </Grid>
+                            <Grid Margin="0,2" Width="280">
+                                <TextBlock Text="Droite :" VerticalAlignment="Center" Foreground="#5C3317" FontWeight="Bold"/>
+                                <Button x:Name="BtnBindRight" Content="D" HorizontalAlignment="Right" Width="80" Height="25" Background="#DDB678" BorderBrush="#8B4513" Foreground="#5C3317" FontWeight="Bold" Click="BtnBind_Click" Tag="RIGHT"/>
+                            </Grid>
+
+                            <Grid Margin="0,2" Width="280">
+                                <TextBlock Text="Sprinter :" VerticalAlignment="Center" Foreground="#5C3317" FontWeight="Bold"/>
+                                <Button x:Name="BtnBindSprint" Content="LeftShift" HorizontalAlignment="Right" Width="80" Height="25" Background="#DDB678" BorderBrush="#8B4513" Foreground="#5C3317" FontWeight="Bold" Click="BtnBind_Click" Tag="SPRINT"/>
+                            </Grid>
+                            <Grid Margin="0,2" Width="280">
+                                <TextBlock Text="Attaquer (Clavier) :" VerticalAlignment="Center" Foreground="#5C3317" FontWeight="Bold"/>
+                                <Button x:Name="BtnBindAttack" Content="None" HorizontalAlignment="Right" Width="80" Height="25" Background="#DDB678" BorderBrush="#8B4513" Foreground="#5C3317" FontWeight="Bold" Click="BtnBind_Click" Tag="ATTACK"/>
+                            </Grid>
+                            <Grid Margin="0,2" Width="280">
+                                <TextBlock Text="Bloquer (Clavier) :" VerticalAlignment="Center" Foreground="#5C3317" FontWeight="Bold"/>
+                                <Button x:Name="BtnBindBlock" Content="None" HorizontalAlignment="Right" Width="80" Height="25" Background="#DDB678" BorderBrush="#8B4513" Foreground="#5C3317" FontWeight="Bold" Click="BtnBind_Click" Tag="BLOCK"/>
+                            </Grid>
+
+                            <TextBlock HorizontalAlignment="Center" FontSize="10" FontStyle="Italic" Foreground="#8B4513" Margin="0,5,0,0" Text="(La Souris fonctionne toujours pour Attaquer/Bloquer)" />
                         </StackPanel>
                         <Button
                             Width="40"

@@ -24,6 +24,20 @@
                     </TransformGroup>
                 </Canvas.RenderTransform>
 
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="0" Canvas.Top="0" Stretch="Fill" Panel.ZIndex="-100"/>
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="427" Canvas.Top="0" Stretch="Fill" Panel.ZIndex="-100"/>
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="854" Canvas.Top="0" Stretch="Fill" Panel.ZIndex="-100"/>
+
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="0" Canvas.Top="240" Stretch="Fill" Panel.ZIndex="-100"/>
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="427" Canvas.Top="240" Stretch="Fill" Panel.ZIndex="-100"/>
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="854" Canvas.Top="240" Stretch="Fill" Panel.ZIndex="-100"/>
+
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="0" Canvas.Top="480" Stretch="Fill" Panel.ZIndex="-100"/>
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="427" Canvas.Top="480" Stretch="Fill" Panel.ZIndex="-100"/>
+                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="854" Canvas.Top="480" Stretch="Fill" Panel.ZIndex="-100"/>
+
+                <Canvas x:Name="CalqueCollisions" Panel.ZIndex="1000"/>
+
                 <Image x:Name="Player" 
                        Source="/Images/Player/walk0.png" 
                        Width="60" Height="60" 
@@ -37,6 +51,7 @@
 
             </Canvas>
         </Canvas>
+
 
         <Canvas Panel.ZIndex="2000">
             <Button Click="Button_Pause_Click" Canvas.Right="20" Canvas.Top="20" Width="140" Height="50" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="4">
@@ -56,6 +71,7 @@
 
             <ProgressBar x:Name="BarreBouclier" Width="200" Height="10" Value="100" Maximum="100" Canvas.Left="20" Canvas.Top="85" Foreground="Cyan" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
             <TextBlock Text="BOUCLIER" FontSize="8" Canvas.Left="30" Canvas.Top="85" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
+
         </Canvas>
 
         <Grid x:Name="GridCompteARebours" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0" IsHitTestVisible="False" Panel.ZIndex="2000">
