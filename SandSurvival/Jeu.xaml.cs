@@ -39,6 +39,10 @@ namespace SandSurvival
         private double shieldEnergy = 100;
         private bool canBlock = true;
 
+        // --- Variables pour l'EASTER EGG ---
+        private bool isTitanMode = false; // Mode Titan (Touche T)
+        private int totalKills = 0; // Compteur total de kills
+
         private List<Image> healthKits = new List<Image>();
         private int survivalKillsCounter = 0;
         private List<Ennemi> enemies = new List<Ennemi>();
@@ -65,14 +69,12 @@ namespace SandSurvival
         private int frameDelay = 5;
 
         // --- MAP INFINIE (5x5 tuiles de 2048px) ---
-        // --- VARIABLES GLOBALES ---
-        // Limites de la map infinie (5 tuiles de large * 2048px)
         private double mapMinX = 0;
         private double mapMaxX = 2048 * 5; // = 10240 pixels
         private double mapMinY = 0;
-        private double mapMaxY = 2048 * 5; // = 10240 pixels 
+        private double mapMaxY = 2048 * 5; // = 10240 pixels
 
-        // Plus de liste d'obstacles (supprimée comme demandé)
+        // Pas de collisions murs
 
         private int currentWave = 1;
         private int enemiesToKillTotal = 3;
@@ -89,11 +91,11 @@ namespace SandSurvival
         public Jeu()
         {
             InitializeComponent();
-            LoadAssets(); // Charge les images (dont le fond)
+            LoadAssets();
 
             this.Loaded += (s, e) =>
             {
-                InitExtendedMap(); // Crée la map infinie
+                InitExtendedMap(); // Crée la vraie map infinie
                 LancerMusiqueJeu();
 
                 // Cache le calque de debug s'il existe
@@ -123,6 +125,7 @@ namespace SandSurvival
             this.Focus();
         }
 
+        // --- CHARGEMENT ASSETS (AVEC FOND.PNG) ---
         private void LoadAssets()
         {
             try
@@ -147,10 +150,9 @@ namespace SandSurvival
             }
         }
 
-        // --- CRÉATION DE LA MAP INFINIE (TUILES) ---
+        // --- GENERATION MAP INFINIE ---
         private void InitExtendedMap()
         {
-            // Sécurité : si l'image n'est pas chargée, on annule
             if (fondTexture == null) return;
 
             double tailleTuile = 2048; // Taille de ton image fond.png
@@ -185,10 +187,26 @@ namespace SandSurvival
 
             GererVaguesEtSpawns();
             GererStamina();
+            // GererCooldownDash(); // Tu as dit de l'enlever, donc je le commente
             GererBouclier();
             GererRamassageKits();
 
+            // --- GESTION TAILLE TITAN (CORRECTION BUG) ---
+            // On définit la taille : 3 si Titan, 1 si Normal
+            double scaleFactor = isTitanMode ? 3.0 : 1.0;
+
+            // On applique la hauteur
+            PlayerScale.ScaleY = scaleFactor;
+
+            // On applique la largeur en gardant la direction actuelle (Gauche ou Droite)
+            // Si ScaleX est positif (droite), on met scaleFactor. Si négatif (gauche), -scaleFactor.
+            if (PlayerScale.ScaleX > 0) PlayerScale.ScaleX = scaleFactor;
+            else PlayerScale.ScaleX = -scaleFactor;
+
+            // --- DEPLACEMENTS ---
             double baseSpeed = (isRunning && canRun) ? runSpeed : walkSpeed;
+            if (isTitanMode) baseSpeed = 10; // Vitesse rapide en Titan
+
             double currentX = Canvas.GetLeft(Player);
             double currentY = Canvas.GetTop(Player);
 
@@ -198,14 +216,24 @@ namespace SandSurvival
 
             if (goUp) { potentialY -= baseSpeed; isMoving = true; }
             if (goDown) { potentialY += baseSpeed; isMoving = true; }
-            if (goLeft) { potentialX -= baseSpeed; isMoving = true; PlayerScale.ScaleX = -1; }
-            if (goRight) { potentialX += baseSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
+
+            if (goLeft)
+            {
+                potentialX -= baseSpeed;
+                isMoving = true;
+                PlayerScale.ScaleX = -scaleFactor; // On tourne à gauche en gardant la taille
+            }
+            if (goRight)
+            {
+                potentialX += baseSpeed;
+                isMoving = true;
+                PlayerScale.ScaleX = scaleFactor; // On tourne à droite en gardant la taille
+            }
 
             // --- GESTION DES LIMITES (PAS DE COLLISIONS MURS) ---
             double nextX = currentX;
             double nextY = currentY;
 
-            // Limites de la map immense (0 à 10240)
             if (potentialX >= mapMinX && potentialX <= mapMaxX - 60) nextX = potentialX;
             if (potentialY >= mapMinY && potentialY <= mapMaxY - 60) nextY = potentialY;
 
@@ -225,7 +253,7 @@ namespace SandSurvival
             }
 
             // Caméra centrée
-            double zoom = 1.5; // Zoom normal pour voir la grande map
+            double zoom = 1.5;
             double screenCenterX = this.ActualWidth / 2;
             double screenCenterY = this.ActualHeight / 2;
             if (screenCenterX <= 1) screenCenterX = 600;
@@ -439,8 +467,20 @@ namespace SandSurvival
             if (kitSprite == null) return;
 
             Random rnd = new Random();
-            double kX = rnd.Next((int)mapMinX + 100, (int)mapMaxX - 100);
-            double kY = rnd.Next((int)mapMinY + 100, (int)mapMaxY - 100);
+            double pX = Canvas.GetLeft(Player);
+            double pY = Canvas.GetTop(Player);
+
+            // Spawn proche du joueur (rayon 500px)
+            double angle = rnd.NextDouble() * Math.PI * 2;
+            double distance = rnd.Next(200, 500);
+            double kX = pX + Math.Cos(angle) * distance;
+            double kY = pY + Math.Sin(angle) * distance;
+
+            // Garde fou limites map
+            if (kX < mapMinX) kX = mapMinX + 50;
+            if (kX > mapMaxX) kX = mapMaxX - 50;
+            if (kY < mapMinY) kY = mapMinY + 50;
+            if (kY > mapMaxY) kY = mapMaxY - 50;
 
             Image kit = new Image();
             kit.Source = kitSprite;
@@ -488,7 +528,11 @@ namespace SandSurvival
                     MondeDeJeu.Children.Remove(ennemi.Sprite);
                     MondeDeJeu.Children.Remove(ennemi.HealthBar);
                     enemies.RemoveAt(i);
+
+                    // Compteurs
                     enemiesKilledInWave++;
+                    totalKills++;
+                    TexteScore.Text = "MOMIES TUÉES : " + totalKills;
 
                     if (isSurvivalMode)
                     {
@@ -625,9 +669,24 @@ namespace SandSurvival
             n.HealthBar.Maximum = n.HP;
             n.HealthBar.Value = n.HP;
 
+            // --- SPAWN CORRIGÉ : PROCHE DU JOUEUR ---
             Random r = new Random();
-            double sX = r.Next((int)mapMinX + 100, (int)mapMaxX - 100);
-            double sY = r.Next((int)mapMinY + 100, (int)mapMaxY - 100);
+            double pX = Canvas.GetLeft(Player);
+            double pY = Canvas.GetTop(Player);
+
+            // On choisit une direction et une distance aléatoire autour du joueur
+            // Entre 400 et 800 pixels (pour qu'ils ne pop pas SUR le joueur, mais pas trop loin)
+            double angle = r.NextDouble() * Math.PI * 2;
+            double distance = r.Next(400, 800);
+
+            double sX = pX + Math.Cos(angle) * distance;
+            double sY = pY + Math.Sin(angle) * distance;
+
+            // On vérifie qu'on reste dans la map
+            if (sX < mapMinX + 50) sX = mapMinX + 50;
+            if (sX > mapMaxX - 50) sX = mapMaxX - 50;
+            if (sY < mapMinY + 50) sY = mapMinY + 50;
+            if (sY > mapMaxY - 50) sY = mapMaxY - 50;
 
             Canvas.SetLeft(n.Sprite, sX);
             Canvas.SetTop(n.Sprite, sY);
@@ -699,6 +758,30 @@ namespace SandSurvival
 
             if (e.Key == MainWindow.InputAttack && MainWindow.InputAttack != Key.None) TenterAttaque();
             if (e.Key == MainWindow.InputBlock && MainWindow.InputBlock != Key.None) CommencerBlocage();
+
+            // --- EASTER EGG TITAN (T) ---
+            if (e.Key == Key.T)
+            {
+                isTitanMode = !isTitanMode;
+                if (isTitanMode)
+                {
+                    PlayerScale.ScaleX = 3.0; // Grossir
+                    PlayerScale.ScaleY = 3.0;
+                    walkSpeed = 10;
+                    runSpeed = 15;
+                    vieJoueur = 1000;
+                    BarreDeVie.Value = 1000;
+                }
+                else
+                {
+                    PlayerScale.ScaleX = 1.0; // Normal
+                    PlayerScale.ScaleY = 1.0;
+                    walkSpeed = 4;
+                    runSpeed = 6;
+                    vieJoueur = 100;
+                    BarreDeVie.Value = vieJoueur;
+                }
+            }
         }
 
         private void Window_KeyUp(object s, KeyEventArgs e)
@@ -793,7 +876,10 @@ namespace SandSurvival
 
                     if (dist < 80)
                     {
-                        ennemi.HP--;
+                        // MODE TITAN = ONE SHOT
+                        if (isTitanMode) ennemi.HP -= 100;
+                        else ennemi.HP--;
+
                         ennemi.HealthBar.Value = ennemi.HP;
                         ennemi.Sprite.Opacity = 0.5;
 
