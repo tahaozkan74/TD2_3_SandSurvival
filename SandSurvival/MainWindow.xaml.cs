@@ -1,85 +1,225 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading; // Nécessaire pour le Timer
+using System.Windows.Threading;
 
 namespace SandSurvival
 {
     public partial class MainWindow : Window
     {
-        public static double MusicVolume = 0.5;
+        // =========================================================
+        // VOLUME MUSIQUE (alias FR + alias ENG pour compatibilité)
+        // =========================================================
+        private static double volumeMusique = 0.5;
 
-        // Touches par défaut
-        public static System.Windows.Input.Key InputUp = System.Windows.Input.Key.Z;
-        public static System.Windows.Input.Key InputDown = System.Windows.Input.Key.S;
-        public static System.Windows.Input.Key InputLeft = System.Windows.Input.Key.Q;
-        public static System.Windows.Input.Key InputRight = System.Windows.Input.Key.D;
+        // Nom FR (recommandé)
+        public static double VolumeMusique
+        {
+            get { return volumeMusique; }
+            set { volumeMusique = value; }
+        }
 
-        // NOUVELLES TOUCHES
-        public static System.Windows.Input.Key InputSprint = System.Windows.Input.Key.LeftShift;
-        // Par défaut "None" car on utilise la souris, mais on peut configurer une touche (ex: Espace)
-        public static System.Windows.Input.Key InputAttack = System.Windows.Input.Key.None;
-        public static System.Windows.Input.Key InputBlock = System.Windows.Input.Key.None;
+        // Nom ENG (compatibilité avec ton ancien code)
+        public static double MusicVolume
+        {
+            get { return volumeMusique; }
+            set { volumeMusique = value; }
+        }
 
+        // =========================================================
+        // TOUCHES (alias FR + alias ENG pour compatibilité)
+        // =========================================================
+        private static Key toucheHaut = Key.Z;
+        private static Key toucheBas = Key.S;
+        private static Key toucheGauche = Key.Q;
+        private static Key toucheDroite = Key.D;
 
-        private MediaPlayer musicPlayer = new MediaPlayer();
+        private static Key toucheSprint = Key.LeftShift;
+        private static Key toucheAttaque = Key.None;
+        private static Key toucheBlocage = Key.None;
 
-        // Timer pour les crédits
-        private DispatcherTimer creditTimer = new DispatcherTimer();
+        // Noms FR (recommandés)
+        public static Key ToucheHaut
+        {
+            get { return toucheHaut; }
+            set { toucheHaut = value; }
+        }
+
+        public static Key ToucheBas
+        {
+            get { return toucheBas; }
+            set { toucheBas = value; }
+        }
+
+        public static Key ToucheGauche
+        {
+            get { return toucheGauche; }
+            set { toucheGauche = value; }
+        }
+
+        public static Key ToucheDroite
+        {
+            get { return toucheDroite; }
+            set { toucheDroite = value; }
+        }
+
+        public static Key ToucheSprint
+        {
+            get { return toucheSprint; }
+            set { toucheSprint = value; }
+        }
+
+        public static Key ToucheAttaque
+        {
+            get { return toucheAttaque; }
+            set { toucheAttaque = value; }
+        }
+
+        public static Key ToucheBlocage
+        {
+            get { return toucheBlocage; }
+            set { toucheBlocage = value; }
+        }
+
+        // Noms ENG (compatibilité)
+        public static Key InputUp
+        {
+            get { return toucheHaut; }
+            set { toucheHaut = value; }
+        }
+
+        public static Key InputDown
+        {
+            get { return toucheBas; }
+            set { toucheBas = value; }
+        }
+
+        public static Key InputLeft
+        {
+            get { return toucheGauche; }
+            set { toucheGauche = value; }
+        }
+
+        public static Key InputRight
+        {
+            get { return toucheDroite; }
+            set { toucheDroite = value; }
+        }
+
+        public static Key InputSprint
+        {
+            get { return toucheSprint; }
+            set { toucheSprint = value; }
+        }
+
+        public static Key InputAttack
+        {
+            get { return toucheAttaque; }
+            set { toucheAttaque = value; }
+        }
+
+        public static Key InputBlock
+        {
+            get { return toucheBlocage; }
+            set { toucheBlocage = value; }
+        }
+
+        // =========================================================
+        // MUSIQUE + TIMER CRÉDITS
+        // =========================================================
+        private MediaPlayer lecteurMusique = new MediaPlayer();
+        private DispatcherTimer timerCredits = new DispatcherTimer();
+
+        // =========================================================
+        // REBIND TOUCHES
+        // =========================================================
+        private Button boutonRebindEnCours = null;   // bouton qu'on est en train de modifier
+        private string actionRebindEnCours = "";     // UP, DOWN, LEFT, RIGHT, SPRINT, ATTACK, BLOCK
 
         public MainWindow()
         {
             InitializeComponent();
+
             LancerMusique();
 
-            if (this.FindName("SliderVolume") is Slider slider) slider.Value = MusicVolume;
+            // Initialise le slider du volume (si existe dans XAML)
+            try
+            {
+                SliderVolume.Value = VolumeMusique;
+            }
+            catch
+            {
+            }
 
-            // Configuration du Timer des crédits (60 FPS environ)
-            creditTimer.Interval = TimeSpan.FromMilliseconds(16);
-            creditTimer.Tick += CreditAnimation_Tick;
+            // Timer crédits (≈ 60 FPS)
+            timerCredits.Interval = TimeSpan.FromMilliseconds(16);
+            timerCredits.Tick += TimerCredits_Tick;
         }
 
+        /// <summary>
+        /// Lance la musique du menu + boucle.
+        /// </summary>
         private void LancerMusique()
         {
             try
             {
-                musicPlayer.Open(new Uri("Audio/BLACK OPS 2 ZOMBIES OFFICIAL Theme Song.mp3", UriKind.Relative));
-                musicPlayer.MediaEnded += (s, e) => { musicPlayer.Position = TimeSpan.Zero; musicPlayer.Play(); };
-                musicPlayer.Volume = MusicVolume;
-                musicPlayer.Play();
+                lecteurMusique.Open(new Uri("Audio/BLACK OPS 2 ZOMBIES OFFICIAL Theme Song.mp3", UriKind.Relative));
+                lecteurMusique.MediaEnded += LecteurMusique_MediaEnded;
+                lecteurMusique.Volume = VolumeMusique;
+                lecteurMusique.Play();
             }
-            catch { }
-        }
-
-        // --- ANIMATION CRÉDITS ---
-        private void CreditAnimation_Tick(object sender, EventArgs e)
-        {
-            if (this.FindName("StackPanelCredit") is StackPanel sp)
+            catch
             {
-                double currentTop = Canvas.GetTop(sp);
-
-                // Si pas défini, on commence en bas
-                if (double.IsNaN(currentTop)) currentTop = 600;
-
-                // On fait monter le texte
-                currentTop -= 3.0;
-
-                // Si le texte est trop haut, on le remet en bas pour boucler
-                if (currentTop < -sp.ActualHeight) currentTop = this.ActualHeight;
-
-                Canvas.SetTop(sp, currentTop);
             }
         }
 
-        // --- BOUTONS ---
+        /// <summary>
+        /// Quand la musique se termine, on la relance.
+        /// </summary>
+        private void LecteurMusique_MediaEnded(object sender, EventArgs e)
+        {
+            lecteurMusique.Position = TimeSpan.Zero;
+            lecteurMusique.Play();
+        }
+
+        /// <summary>
+        /// Animation crédits : fait défiler le texte vers le haut.
+        /// </summary>
+        private void TimerCredits_Tick(object sender, EventArgs e)
+        {
+            double topActuel = Canvas.GetTop(StackPanelCredit);
+
+            // Si pas défini, on part du bas
+            if (double.IsNaN(topActuel))
+            {
+                topActuel = 600;
+            }
+
+            topActuel = topActuel - 3.0;
+
+            // Si le texte est sorti de l'écran, on le remet en bas
+            if (topActuel < -StackPanelCredit.ActualHeight)
+            {
+                topActuel = ActualHeight;
+            }
+
+            Canvas.SetTop(StackPanelCredit, topActuel);
+        }
+
+        // =========================================================
+        // BOUTONS MENU
+        // =========================================================
 
         private void Button_Jouer_Click(object sender, RoutedEventArgs e)
         {
-            musicPlayer.Stop();
-            Jeu j = new Jeu();
-            j.Show();
-            this.Close();
+            lecteurMusique.Stop();
+
+            Jeu jeu = new Jeu();
+            jeu.Show();
+
+            Close();
         }
 
         private void Button_Quitter_Click(object sender, RoutedEventArgs e)
@@ -87,99 +227,94 @@ namespace SandSurvival
             Application.Current.Shutdown();
         }
 
-        // Paramètres
+        // ----- Paramètres -----
         private void Button_Parametre_Click(object sender, RoutedEventArgs e)
         {
-            if (this.FindName("GridParametres") is Grid g) g.Visibility = Visibility.Visible;
+            GridParametres.Visibility = Visibility.Visible;
         }
 
         private void Button_FermerParametre_Click(object sender, RoutedEventArgs e)
         {
-            if (this.FindName("GridParametres") is Grid g) g.Visibility = Visibility.Collapsed;
+            GridParametres.Visibility = Visibility.Collapsed;
         }
 
         private void SliderVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            MusicVolume = e.NewValue;
-            musicPlayer.Volume = MusicVolume;
+            VolumeMusique = e.NewValue;
+            lecteurMusique.Volume = VolumeMusique;
         }
 
-        // Règles
+        // ----- Règles -----
         private void Button_Regles_Click(object sender, RoutedEventArgs e)
         {
-            if (this.FindName("GridRegles") is Grid g) g.Visibility = Visibility.Visible;
+            GridRegles.Visibility = Visibility.Visible;
         }
 
         private void Button_FermerRegles_Click(object sender, RoutedEventArgs e)
         {
-            if (this.FindName("GridRegles") is Grid g) g.Visibility = Visibility.Collapsed;
+            GridRegles.Visibility = Visibility.Collapsed;
         }
 
-        // Crédits (Avec lancement du Timer)
+        // ----- Crédits -----
         private void Button_Credit_Click(object sender, RoutedEventArgs e)
         {
-            if (this.FindName("GridCredit") is Grid g) g.Visibility = Visibility.Visible;
+            GridCredit.Visibility = Visibility.Visible;
 
-            // On reset la position du texte et on lance l'animation
-            if (this.FindName("StackPanelCredit") is StackPanel sp)
-            {
-                Canvas.SetTop(sp, 600); // Commence en bas
-                creditTimer.Start();
-            }
+            // Reset position + start animation
+            Canvas.SetTop(StackPanelCredit, 600);
+            timerCredits.Start();
         }
 
         private void Button_FermerCredit_Click(object sender, RoutedEventArgs e)
         {
-            if (this.FindName("GridCredit") is Grid g) g.Visibility = Visibility.Collapsed;
-            creditTimer.Stop(); // On arrête l'animation pour économiser les ressources
+            GridCredit.Visibility = Visibility.Collapsed;
+            timerCredits.Stop();
         }
 
-        // --- GESTION DU REBIND DES TOUCHES ---
-
-        private Button currentBindButton = null; // Bouton en cours de modification
-        private string currentBindAction = "";   // Action en cours (UP, DOWN, etc.)
+        // =========================================================
+        // REBIND TOUCHES
+        // =========================================================
 
         private void BtnBind_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn)
-            {
-                currentBindButton = btn;
-                currentBindAction = btn.Tag.ToString(); // Récupère UP, DOWN, LEFT ou RIGHT
+            Button btn = sender as Button;
+            if (btn == null) return;
 
-                // Visuel pour dire "Appuie sur une touche"
-                btn.Content = "...";
-                btn.Background = Brushes.LightGreen;
+            boutonRebindEnCours = btn;
+            actionRebindEnCours = btn.Tag.ToString();
 
-                // On écoute la prochaine touche pressée sur la fenêtre
-                this.KeyDown += MainWindow_KeyDown_Rebind;
-            }
+            // Visuel : attente touche
+            btn.Content = "...";
+            btn.Background = Brushes.LightGreen;
+
+            // On écoute la prochaine touche pressée
+            KeyDown += MainWindow_KeyDown_Rebind;
         }
 
-        private void MainWindow_KeyDown_Rebind(object sender, System.Windows.Input.KeyEventArgs e)
+        private void MainWindow_KeyDown_Rebind(object sender, KeyEventArgs e)
         {
-            this.KeyDown -= MainWindow_KeyDown_Rebind; // Arrêter l'écoute
+            // On arrête l'écoute
+            KeyDown -= MainWindow_KeyDown_Rebind;
 
-            if (currentBindButton != null)
-            {
-                // Mise à jour de la variable correspondante
-                switch (currentBindAction)
-                {
-                    case "UP": InputUp = e.Key; break;
-                    case "DOWN": InputDown = e.Key; break;
-                    case "LEFT": InputLeft = e.Key; break;
-                    case "RIGHT": InputRight = e.Key; break;
-                    case "SPRINT": InputSprint = e.Key; break;
-                    case "ATTACK": InputAttack = e.Key; break;
-                    case "BLOCK": InputBlock = e.Key; break;
-                }
+            if (boutonRebindEnCours == null) return;
 
-                currentBindButton.Content = e.Key.ToString();
+            // Mise à jour de la touche selon l'action
+            if (actionRebindEnCours == "UP") ToucheHaut = e.Key;
+            else if (actionRebindEnCours == "DOWN") ToucheBas = e.Key;
+            else if (actionRebindEnCours == "LEFT") ToucheGauche = e.Key;
+            else if (actionRebindEnCours == "RIGHT") ToucheDroite = e.Key;
+            else if (actionRebindEnCours == "SPRINT") ToucheSprint = e.Key;
+            else if (actionRebindEnCours == "ATTACK") ToucheAttaque = e.Key;
+            else if (actionRebindEnCours == "BLOCK") ToucheBlocage = e.Key;
 
-                var converter = new System.Windows.Media.BrushConverter();
-                currentBindButton.Background = (Brush)converter.ConvertFromString("#DDB678");
-                currentBindButton = null;
-            }
+            boutonRebindEnCours.Content = e.Key.ToString();
+
+            // Remet couleur d'origine
+            BrushConverter convertisseur = new BrushConverter();
+            boutonRebindEnCours.Background = (Brush)convertisseur.ConvertFromString("#DDB678");
+
+            boutonRebindEnCours = null;
+            actionRebindEnCours = "";
         }
-
     }
 }

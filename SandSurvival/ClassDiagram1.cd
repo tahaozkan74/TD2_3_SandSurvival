@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="SandSurvival.Ennemi">
+    <Position X="8.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAQAAAABBAAAIAAAAAAAQAEAQAAAIAAA=</HashCode>
+      <FileName>Jeu.xaml.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SandSurvival.Jeu">
+    <Position X="10.5" Y="2" Width="3.75" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>lJRuAS4SgYg/AxEFA1gBACwzCLyQGiQiDECyOAgA0Mk=</HashCode>
+      <FileName>Jeu.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="SandSurvival.MainWindow">
+    <Position X="7" Y="2" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Properties" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>ADAApBgAIJR0UAAAGCAQgIAoQCABUCAAKAAkhAAgQAA=</HashCode>
+      <FileName>MainWindow.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
