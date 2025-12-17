@@ -10,9 +10,6 @@ using System.Windows.Threading;
 
 namespace SandSurvival
 {
-    // =========================================================
-    // CLASSE ENNEMI
-    // =========================================================
     public class Ennemi
     {
         public Image Sprite { get; set; }
@@ -26,15 +23,12 @@ namespace SandSurvival
         public int IndexFrame { get; set; }
         public int CompteurFrame { get; set; }
 
-        // Boss ?
         public bool EstBoss { get; set; }
     }
 
     public partial class Jeu : Window
     {
-        // =========================================================
-        // TIMER + ÉTATS
-        // =========================================================
+
         private DispatcherTimer timerJeu = new DispatcherTimer();
         private bool vaHaut;
         private bool vaBas;
@@ -43,14 +37,8 @@ namespace SandSurvival
 
         private bool estEnPause = false;
 
-        // =========================================================
-        // MUSIQUE
-        // =========================================================
         private MediaPlayer lecteurMusique = new MediaPlayer();
 
-        // =========================================================
-        // VITESSE / ENDURANCE / BOUCLIER
-        // =========================================================
         private bool estEnCourse = false;
         private double vitesseMarche = 4;
         private double vitesseCourse = 6;
@@ -62,26 +50,16 @@ namespace SandSurvival
         private double energieBouclier = 100;
         private bool peutBloquer = true;
 
-        // Boss spawn ?
         private bool bossApparuDansVague = false;
 
-        // =========================================================
-        // EASTER EGG
-        // =========================================================
         private bool modeTitan = false;
         private bool kamikazeUtilise = false;
         private int totalKills = 0;
 
-        // =========================================================
-        // LISTES OBJETS / ENNEMIS
-        // =========================================================
         private List<Image> kitsSoin = new List<Image>();
         private int compteurKillsSurvie = 0;
         private List<Ennemi> ennemis = new List<Ennemi>();
 
-        // =========================================================
-        // SPRITES
-        // =========================================================
         private List<BitmapImage> spritesMomieMarche = new List<BitmapImage>();
         private List<BitmapImage> spritesMomieAttaque = new List<BitmapImage>();
         private List<BitmapImage> spritesMomieMort = new List<BitmapImage>();
@@ -95,9 +73,6 @@ namespace SandSurvival
         private BitmapImage spriteKitSoin;
         private BitmapImage textureFond;
 
-        // =========================================================
-        // JOUEUR
-        // =========================================================
         private int vieJoueur = 100;
         private bool estInvulnerable = false;
         private int tempsInvulnerabilite = 0;
@@ -109,17 +84,11 @@ namespace SandSurvival
         private int compteurFrame = 0;
         private int delaiFrame = 5;
 
-        // =========================================================
-        // MAP (5x5 tuiles 2048 => 10240 x 10240)
-        // =========================================================
         private double mapMinX = 0;
         private double mapMaxX = 2048 * 5;
         private double mapMinY = 0;
         private double mapMaxY = 2048 * 5;
 
-        // =========================================================
-        // VAGUES
-        // =========================================================
         private int vagueActuelle = 1;
         private int ennemisATuerTotal = 3;
         private int ennemisTuesDansVague = 0;
@@ -135,9 +104,6 @@ namespace SandSurvival
         private double tempsCompteARebours = 10.0;
         private double timerMessage = 0;
 
-        // =========================================================
-        // RANDOM (évite d’en recréer partout)
-        // =========================================================
         private Random aleatoire = new Random();
 
         public Jeu()
@@ -146,15 +112,12 @@ namespace SandSurvival
 
             ChargerRessources();
 
-            // Événement Loaded sans lambda
             Loaded += Jeu_Loaded;
 
-            // Barres UI
             BarreDeVie.Value = vieJoueur;
             BarreStamina.Value = endurance;
             BarreBouclier.Value = energieBouclier;
 
-            // Sliders pause
             try
             {
                 PauseVolumeSlider.Value = MainWindow.VolumeMusique;
@@ -165,30 +128,21 @@ namespace SandSurvival
             {
             }
 
-            // Souris blocage
             MouseRightButtonDown += Window_MouseRightButtonDown;
             MouseRightButtonUp += Window_MouseRightButtonUp;
 
-            // Vague 1
             InitialiserVague(1);
 
-            // Timer principal
             timerJeu.Interval = TimeSpan.FromMilliseconds(16);
             timerJeu.Tick += BoucleJeu;
             timerJeu.Start();
 
             Focus();
         }
-
-        // =========================================================
-        // LOADED
-        // =========================================================
         private void Jeu_Loaded(object sender, RoutedEventArgs e)
         {
             InitialiserMapEtendue();
             LancerMusiqueJeu();
-
-            // Cache le calque debug si besoin
             try
             {
                 CalqueCollisions.Visibility = Visibility.Collapsed;
@@ -197,10 +151,6 @@ namespace SandSurvival
             {
             }
         }
-
-        // =========================================================
-        // CHARGEMENT RESSOURCES (SANS $"...")
-        // =========================================================
         private void ChargerRessources()
         {
             try
@@ -252,10 +202,6 @@ namespace SandSurvival
                 MessageBox.Show("Erreur Assets : " + ex.Message);
             }
         }
-
-        // =========================================================
-        // MAP 5x5
-        // =========================================================
         private void InitialiserMapEtendue()
         {
             if (textureFond == null) return;
@@ -283,10 +229,6 @@ namespace SandSurvival
                 }
             }
         }
-
-        // =========================================================
-        // MUSIQUE (SANS LAMBDA)
-        // =========================================================
         private void LancerMusiqueJeu()
         {
             try
@@ -328,10 +270,6 @@ namespace SandSurvival
             {
             }
         }
-
-        // =========================================================
-        // BOUCLE JEU
-        // =========================================================
         private void BoucleJeu(object sender, EventArgs e)
         {
             if (estEnPause) return;
@@ -347,10 +285,8 @@ namespace SandSurvival
             GererBouclier();
             GererRamassageKits();
 
-            // ----- MODE TITAN : taille + vitesse + vie -----
             AppliquerModeTitan();
 
-            // ----- Déplacement joueur -----
             double vitesse = vitesseMarche;
             if (estEnCourse && peutCourir) vitesse = vitesseCourse;
             if (modeTitan) vitesse = 10;
@@ -366,7 +302,6 @@ namespace SandSurvival
             if (vaHaut) { yVoulu = yVoulu - vitesse; joueurBouge = true; }
             if (vaBas) { yVoulu = yVoulu + vitesse; joueurBouge = true; }
 
-            // Direction + flip
             if (vaGauche)
             {
                 xVoulu = xVoulu - vitesse;
@@ -380,7 +315,6 @@ namespace SandSurvival
                 MettreDirectionJoueurDroite();
             }
 
-            // Limites map
             double xFinal = x;
             double yFinal = y;
 
@@ -390,10 +324,8 @@ namespace SandSurvival
             Canvas.SetLeft(Player, xFinal);
             Canvas.SetTop(Player, yFinal);
 
-            // Ennemis
             MettreAJourEnnemis(xFinal, yFinal);
 
-            // Invulnérabilité
             if (estInvulnerable)
             {
                 tempsInvulnerabilite = tempsInvulnerabilite - 1;
@@ -404,25 +336,17 @@ namespace SandSurvival
                 }
             }
 
-            // Caméra (zoom 1.5)
             CentrerCamera(xFinal, yFinal);
 
-            // Anim joueur
             GererAnimationJoueur(joueurBouge);
         }
-
-        // =========================================================
-        // TITAN MODE (corrige taille + direction)
-        // =========================================================
         private void AppliquerModeTitan()
         {
             double facteur = 1.0;
             if (modeTitan) facteur = 3.0;
 
-            // ScaleY
             PlayerScale.ScaleY = facteur;
 
-            // ScaleX garde le signe (gauche/droite)
             if (PlayerScale.ScaleX >= 0) PlayerScale.ScaleX = facteur;
             else PlayerScale.ScaleX = -facteur;
         }
@@ -454,10 +378,6 @@ namespace SandSurvival
             Camera.X = centreX - ((xJoueur + Player.Width / 2) * zoom);
             Camera.Y = centreY - ((yJoueur + Player.Height / 2) * zoom);
         }
-
-        // =========================================================
-        // VAGUES + SPAWN (boss inclus)
-        // =========================================================
         private void InitialiserVague(int numero)
         {
             vagueActuelle = numero;
@@ -465,7 +385,6 @@ namespace SandSurvival
             ennemisSpawnDansVague = 0;
             bossApparuDansVague = false;
 
-            // Supprime ennemis existants
             int i;
             for (i = ennemis.Count - 1; i >= 0; i = i - 1)
             {
@@ -502,7 +421,6 @@ namespace SandSurvival
 
         private void GererVaguesEtSpawn()
         {
-            // message fin vague
             if (messageFinVague)
             {
                 timerMessage = timerMessage - 0.016;
@@ -515,7 +433,6 @@ namespace SandSurvival
                 return;
             }
 
-            // compte à rebours
             if (compteARebours)
             {
                 tempsCompteARebours = tempsCompteARebours - 0.016;
@@ -536,7 +453,6 @@ namespace SandSurvival
 
             if (!modeSurvie)
             {
-                // Vague standard : d'abord tuer les 3 ennemis
                 if (ennemisTuesDansVague < ennemisATuerTotal)
                 {
                     int max = 1;
@@ -547,7 +463,6 @@ namespace SandSurvival
                 }
                 else
                 {
-                    // Ensuite boss
                     if (!bossApparuDansVague)
                     {
                         FaireApparaitreBoss();
@@ -569,7 +484,6 @@ namespace SandSurvival
             }
             else
             {
-                // Survie
                 timerSpawnSurvie = timerSpawnSurvie - 0.016;
                 if (timerSpawnSurvie <= 0)
                 {
@@ -608,9 +522,6 @@ namespace SandSurvival
             return c;
         }
 
-        // =========================================================
-        // ENDURANCE / BOUCLIER
-        // =========================================================
         private void GererEndurance()
         {
             if (estEnCourse && (vaHaut || vaBas || vaGauche || vaDroite))
@@ -663,10 +574,6 @@ namespace SandSurvival
 
             BarreBouclier.Value = energieBouclier;
         }
-
-        // =========================================================
-        // KIT SOIN (spawn proche joueur)
-        // =========================================================
         private void FaireApparaitreKitSoin()
         {
             if (kitsSoin.Count > 0) return;
@@ -729,10 +636,6 @@ namespace SandSurvival
                 }
             }
         }
-
-        // =========================================================
-        // ENNEMIS (update + dégâts + score)
-        // =========================================================
         private void MettreAJourEnnemis(double xJoueur, double yJoueur)
         {
             int i;
@@ -740,7 +643,6 @@ namespace SandSurvival
             {
                 Ennemi ennemi = ennemis[i];
 
-                // Ennemi mort et fin animation => suppression
                 if (ennemi.EstMort && !ennemi.EnTrainDeMourir)
                 {
                     MondeDeJeu.Children.Remove(ennemi.Sprite);
@@ -749,7 +651,6 @@ namespace SandSurvival
 
                     ennemisTuesDansVague = ennemisTuesDansVague + 1;
 
-                    // Boss mort -> cacher texte
                     if (ennemi.EstBoss)
                     {
                         try
@@ -762,7 +663,6 @@ namespace SandSurvival
                         bossApparuDansVague = false;
                     }
 
-                    // Score total
                     totalKills = totalKills + 1;
                     try
                     {
@@ -772,7 +672,6 @@ namespace SandSurvival
                     {
                     }
 
-                    // Survie : kit toutes les 5 morts
                     if (modeSurvie)
                     {
                         compteurKillsSurvie = compteurKillsSurvie + 1;
@@ -786,14 +685,12 @@ namespace SandSurvival
                     continue;
                 }
 
-                // Animation mort
                 if (ennemi.EnTrainDeMourir)
                 {
                     AnimerMortEnnemi(ennemi);
                     continue;
                 }
 
-                // Mouvement vers joueur
                 double eX = Canvas.GetLeft(ennemi.Sprite);
                 double eY = Canvas.GetTop(ennemi.Sprite);
 
@@ -802,7 +699,6 @@ namespace SandSurvival
 
                 double dist = Math.Sqrt(dx * dx + dy * dy);
 
-                // Flip
                 if (dx > 0) ennemi.Symetrie.ScaleX = -1;
                 else ennemi.Symetrie.ScaleX = 1;
 
@@ -823,7 +719,6 @@ namespace SandSurvival
                     eX = prochainX;
                     eY = prochainY;
 
-                    // Animation marche
                     ennemi.CompteurFrame = ennemi.CompteurFrame + 1;
                     if (ennemi.CompteurFrame > 5)
                     {
@@ -836,7 +731,6 @@ namespace SandSurvival
                 }
                 else
                 {
-                    // Animation attaque
                     ennemi.CompteurFrame = ennemi.CompteurFrame + 1;
                     if (ennemi.CompteurFrame > 3)
                     {
@@ -861,7 +755,6 @@ namespace SandSurvival
                 Canvas.SetLeft(ennemi.BarreVie, eX + 10);
                 Canvas.SetTop(ennemi.BarreVie, eY - 10);
 
-                // Collision => dégâts
                 Rect rectJoueur = new Rect(xJoueur + 15, yJoueur + 15, 30, 30);
                 Rect rectEnnemi = new Rect(eX + 15, eY + 15, 30, 30);
 
@@ -895,10 +788,6 @@ namespace SandSurvival
                 ennemi.CompteurFrame = 0;
             }
         }
-
-        // =========================================================
-        // SPAWN ENNEMI PROCHE JOUEUR
-        // =========================================================
         private void FaireApparaitreEnnemi(bool boss)
         {
             ennemisSpawnDansVague = ennemisSpawnDansVague + 1;
@@ -946,7 +835,6 @@ namespace SandSurvival
 
             Panel.SetZIndex(n.BarreVie, 10000);
 
-            // PV (difficulté)
             int difficulte = 3;
             try
             {
@@ -970,7 +858,6 @@ namespace SandSurvival
             n.BarreVie.Maximum = n.PointsDeVie;
             n.BarreVie.Value = n.PointsDeVie;
 
-            // Spawn proche du joueur
             double pX = Canvas.GetLeft(Player);
             double pY = Canvas.GetTop(Player);
 
@@ -1011,10 +898,6 @@ namespace SandSurvival
             JouerEffetSonore("MomieAttaque.mp4");
             FaireApparaitreEnnemi(true);
         }
-
-        // =========================================================
-        // DÉGÂTS
-        // =========================================================
         private void PrendreDegats(int degats)
         {
             if (joueurEnTrainDeMourir) return;
@@ -1058,10 +941,6 @@ namespace SandSurvival
                 JouerEffetSonore("Degat.mp4");
             }
         }
-
-        // =========================================================
-        // ATTAQUE / BLOCAGE
-        // =========================================================
         private void CommencerBlocage()
         {
             if (peutBloquer && !joueurEnTrainDeMourir && !estEnPause)
@@ -1090,11 +969,9 @@ namespace SandSurvival
             Player.Source = spritesJoueurAttaque[0];
             JouerEffetSonore("AttaqueEffect.mp4");
 
-            // Centre joueur
             double pX = Canvas.GetLeft(Player) + 30;
             double pY = Canvas.GetTop(Player) + 30;
 
-            // On frappe UN SEUL ennemi proche
             int i;
             for (i = 0; i < ennemis.Count; i = i + 1)
             {
@@ -1116,7 +993,6 @@ namespace SandSurvival
                     ennemi.PointsDeVie = ennemi.PointsDeVie - degats;
                     ennemi.BarreVie.Value = ennemi.PointsDeVie;
 
-                    // Flash hit sans lambda : Timer + Tag
                     ennemi.Sprite.Opacity = 0.5;
 
                     DispatcherTimer t = new DispatcherTimer();
@@ -1160,9 +1036,6 @@ namespace SandSurvival
             t.Stop();
         }
 
-        // =========================================================
-        // ANIMATIONS JOUEUR
-        // =========================================================
         private void GererAnimationJoueur(bool bouge)
         {
             if (joueurEnTrainDeMourir) return;
@@ -1170,7 +1043,6 @@ namespace SandSurvival
             if (spritesJoueurMarche.Count == 0) return;
             if (spritesJoueurCourse.Count == 0) return;
 
-            // Attaque
             if (estEnAttaque && spritesJoueurAttaque.Count > 0)
             {
                 compteurFrame = compteurFrame + 1;
@@ -1197,14 +1069,12 @@ namespace SandSurvival
                 return;
             }
 
-            // Blocage
             if (estEnBlocage)
             {
                 if (spriteBlocage != null) Player.Source = spriteBlocage;
                 return;
             }
 
-            // Marche / course
             if (bouge)
             {
                 List<BitmapImage> liste = spritesJoueurMarche;
@@ -1250,9 +1120,6 @@ namespace SandSurvival
             }
         }
 
-        // =========================================================
-        // EVENTS SOURIS (XAML)
-        // =========================================================
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             TenterAttaque();
@@ -1267,36 +1134,26 @@ namespace SandSurvival
         {
             ArreterBlocage();
         }
-
-        // =========================================================
-        // EVENTS CLAVIER (XAML)
-        // =========================================================
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (estEnPause) return;
 
-            // Déplacement (touches configurables depuis MainWindow)
             if (e.Key == MainWindow.ToucheHaut) vaHaut = true;
             if (e.Key == MainWindow.ToucheBas) vaBas = true;
             if (e.Key == MainWindow.ToucheGauche) vaGauche = true;
             if (e.Key == MainWindow.ToucheDroite) vaDroite = true;
-
-            // Sprint
             if (e.Key == MainWindow.ToucheSprint) estEnCourse = true;
 
-            // Attaque clavier si configurée
             if (MainWindow.ToucheAttaque != Key.None)
             {
                 if (e.Key == MainWindow.ToucheAttaque) TenterAttaque();
             }
 
-            // Blocage clavier si configurée
             if (MainWindow.ToucheBlocage != Key.None)
             {
                 if (e.Key == MainWindow.ToucheBlocage) CommencerBlocage();
             }
 
-            // Easter egg Titan (T)
             if (e.Key == Key.T)
             {
                 modeTitan = !modeTitan;
@@ -1319,7 +1176,6 @@ namespace SandSurvival
                 }
             }
 
-            // Kamikaze (K) en survie : 1 seule fois
             if (e.Key == Key.K)
             {
                 if (modeSurvie && !kamikazeUtilise)
@@ -1363,10 +1219,6 @@ namespace SandSurvival
                 ArreterBlocage();
             }
         }
-
-        // =========================================================
-        // BOUTONS UI
-        // =========================================================
         private void Button_Menu_Click(object sender, RoutedEventArgs e)
         {
             timerJeu.Stop();
