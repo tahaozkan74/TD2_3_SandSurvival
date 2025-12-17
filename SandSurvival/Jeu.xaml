@@ -1,7 +1,7 @@
 ﻿<Window x:Class="SandSurvival.Jeu"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Sand Survival - Desert" Height="720" Width="1280"
+        Title="Sand Survival - Desert" Height="2048" Width="2048"
         WindowState="Maximized" 
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -19,29 +19,23 @@
             <Canvas x:Name="MondeDeJeu">
                 <Canvas.RenderTransform>
                     <TransformGroup>
-                        <ScaleTransform ScaleX="2.5" ScaleY="2.5"/>
+                        <ScaleTransform ScaleX="1.5" ScaleY="1.5"/>
                         <TranslateTransform x:Name="Camera" X="0" Y="0"/>
                     </TransformGroup>
                 </Canvas.RenderTransform>
 
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="0" Canvas.Top="0" Stretch="Fill" Panel.ZIndex="-100"/>
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="427" Canvas.Top="0" Stretch="Fill" Panel.ZIndex="-100"/>
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="854" Canvas.Top="0" Stretch="Fill" Panel.ZIndex="-100"/>
-
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="0" Canvas.Top="240" Stretch="Fill" Panel.ZIndex="-100"/>
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="427" Canvas.Top="240" Stretch="Fill" Panel.ZIndex="-100"/>
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="854" Canvas.Top="240" Stretch="Fill" Panel.ZIndex="-100"/>
-
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="0" Canvas.Top="480" Stretch="Fill" Panel.ZIndex="-100"/>
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="427" Canvas.Top="480" Stretch="Fill" Panel.ZIndex="-100"/>
-                <Image Source="/fond.png" Width="427" Height="240" Canvas.Left="854" Canvas.Top="480" Stretch="Fill" Panel.ZIndex="-100"/>
+                <Image Source="/Images/image de fond/fond.png" 
+                                Width="2048" Height="2048" 
+                                Canvas.Left="0" Canvas.Top="0" 
+                                Stretch="Fill" 
+                                Panel.ZIndex="-1000"/>
 
                 <Canvas x:Name="CalqueCollisions" Panel.ZIndex="1000"/>
 
                 <Image x:Name="Player" 
                        Source="/Images/Player/walk0.png" 
                        Width="60" Height="60" 
-                       Canvas.Left="0" Canvas.Top="0"
+                       Canvas.Left="200" Canvas.Top="200"
                        Panel.ZIndex="999"
                        RenderTransformOrigin="0.5,0.5">
                     <Image.RenderTransform>
@@ -51,7 +45,6 @@
 
             </Canvas>
         </Canvas>
-
 
         <Canvas Panel.ZIndex="2000">
             <Button Click="Button_Pause_Click" Canvas.Right="20" Canvas.Top="20" Width="140" Height="50" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="4">
@@ -71,7 +64,6 @@
 
             <ProgressBar x:Name="BarreBouclier" Width="200" Height="10" Value="100" Maximum="100" Canvas.Left="20" Canvas.Top="85" Foreground="Cyan" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
             <TextBlock Text="BOUCLIER" FontSize="8" Canvas.Left="30" Canvas.Top="85" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>
-
         </Canvas>
 
         <Grid x:Name="GridCompteARebours" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,100,0,0" IsHitTestVisible="False" Panel.ZIndex="2000">
@@ -109,16 +101,12 @@
             <Border Width="450" Height="550" Background="#F4E4BC" BorderBrush="#8B4513" BorderThickness="5" CornerRadius="20">
                 <StackPanel VerticalAlignment="Center" Margin="20">
                     <TextBlock Text="PAUSE" FontFamily="Segoe UI Black" FontSize="40" Foreground="#8B4513" HorizontalAlignment="Center" Margin="0,0,0,20"/>
-
                     <TextBlock Text="VOLUME MUSIQUE" FontFamily="Segoe UI Black" FontSize="16" Foreground="#5C3A21" HorizontalAlignment="Center"/>
                     <Slider x:Name="PauseVolumeSlider" Width="250" Minimum="0" Maximum="1" ValueChanged="PauseVolumeSlider_ValueChanged" Margin="0,5,0,15"/>
-
                     <TextBlock Text="VITESSE DU JOUEUR" FontFamily="Segoe UI Black" FontSize="16" Foreground="#5C3A21" HorizontalAlignment="Center"/>
                     <Slider x:Name="SpeedSlider" Width="250" Minimum="2" Maximum="15" Value="6" ValueChanged="SpeedSlider_ValueChanged" Margin="0,5,0,15"/>
-
                     <TextBlock Text="DIFFICULTÉ (VIE ENNEMIS)" FontFamily="Segoe UI Black" FontSize="16" Foreground="#5C3A21" HorizontalAlignment="Center"/>
                     <Slider x:Name="DifficultySlider" Width="250" Minimum="1" Maximum="20" Value="3" Margin="0,5,0,30" IsSnapToTickEnabled="True" TickFrequency="1"/>
-
                     <Button Content="RETOURNER AU JEU" Click="Button_Reprendre_Click" Width="250" Height="50" Margin="5" Background="#8B4513" Foreground="White" FontFamily="Segoe UI Black" FontSize="20">
                         <Button.Resources>
                             <Style TargetType="Border">
@@ -126,7 +114,6 @@
                             </Style>
                         </Button.Resources>
                     </Button>
-
                     <Button Content="MENU PRINCIPAL" Click="Button_Menu_Click" Width="250" Height="50" Margin="5" Background="#DDB678" Foreground="#8B4513" FontFamily="Segoe UI Black" FontSize="20">
                         <Button.Resources>
                             <Style TargetType="Border">

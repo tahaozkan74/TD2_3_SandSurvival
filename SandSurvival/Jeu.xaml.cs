@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using System.Windows.Shapes;
 
 namespace SandSurvival
 {
@@ -52,7 +53,7 @@ namespace SandSurvival
 
         private BitmapImage blockSprite;
         private BitmapImage kitSprite;
-        private BitmapImage fondTexture;
+        private BitmapImage fondTexture; // Texture pour le sol infini
 
         private int vieJoueur = 100;
         private bool estInvulnerable = false;
@@ -63,10 +64,15 @@ namespace SandSurvival
         private int frameCounter = 0;
         private int frameDelay = 5;
 
-        private double mapMinX = -1024;
-        private double mapMaxX = 2048;
-        private double mapMinY = -1024;
-        private double mapMaxY = 2048;
+        // --- MAP INFINIE (5x5 tuiles de 2048px) ---
+        // --- VARIABLES GLOBALES ---
+        // Limites de la map infinie (5 tuiles de large * 2048px)
+        private double mapMinX = 0;
+        private double mapMaxX = 2048 * 5; // = 10240 pixels
+        private double mapMinY = 0;
+        private double mapMaxY = 2048 * 5; // = 10240 pixels 
+
+        // Plus de liste d'obstacles (supprimée comme demandé)
 
         private int currentWave = 1;
         private int enemiesToKillTotal = 3;
@@ -83,13 +89,14 @@ namespace SandSurvival
         public Jeu()
         {
             InitializeComponent();
-
-            LoadAssets();
-            InitExtendedMap();
+            LoadAssets(); // Charge les images (dont le fond)
 
             this.Loaded += (s, e) =>
             {
+                InitExtendedMap(); // Crée la map infinie
                 LancerMusiqueJeu();
+
+                // Cache le calque de debug s'il existe
                 if (this.FindName("CalqueCollisions") is Canvas c) c.Visibility = Visibility.Collapsed;
             };
 
@@ -97,7 +104,6 @@ namespace SandSurvival
             BarreStamina.Value = stamina;
             BarreBouclier.Value = shieldEnergy;
 
-            // Init Sliders
             try
             {
                 if (this.FindName("PauseVolumeSlider") is Slider v) v.Value = MainWindow.MusicVolume;
@@ -115,49 +121,6 @@ namespace SandSurvival
             gameTimer.Tick += GameLoop;
             gameTimer.Start();
             this.Focus();
-        }
-
-        private void LancerMusiqueJeu()
-        {
-            try
-            {
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Audio", "BLACK OPS 2 ZOMBIES OFFICIAL Theme Song.mp3");
-                if (File.Exists(path))
-                {
-                    musicPlayer.Open(new Uri(path, UriKind.Absolute));
-                    musicPlayer.MediaEnded += (s, e) => { musicPlayer.Position = TimeSpan.Zero; musicPlayer.Play(); };
-                    musicPlayer.Volume = MainWindow.MusicVolume;
-                    musicPlayer.Play();
-                }
-            }
-            catch { }
-        }
-
-        private void JouerEffetSonore(string nomFichier)
-        {
-            try
-            {
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Audio", nomFichier);
-                if (File.Exists(path))
-                {
-                    MediaPlayer sfx = new MediaPlayer();
-                    sfx.Open(new Uri(path, UriKind.Absolute));
-                    sfx.Volume = MainWindow.MusicVolume;
-                    sfx.Play();
-                }
-            }
-            catch { }
-        }
-
-        private BitmapImage ChargerImage(string relativePath)
-        {
-            try
-            {
-                string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
-                if (File.Exists(fullPath)) return new BitmapImage(new Uri(fullPath, UriKind.Absolute));
-                else return null;
-            }
-            catch { return null; }
         }
 
         private void LoadAssets()
@@ -184,22 +147,142 @@ namespace SandSurvival
             }
         }
 
+        // --- CRÉATION DE LA MAP INFINIE (TUILES) ---
         private void InitExtendedMap()
         {
+            // Sécurité : si l'image n'est pas chargée, on annule
             if (fondTexture == null) return;
-            for (int x = -1; x <= 1; x++)
+
+            double tailleTuile = 2048; // Taille de ton image fond.png
+
+            // On crée une grille de 5x5 images
+            for (int x = 0; x < 5; x++)
             {
-                for (int y = -1; y <= 1; y++)
+                for (int y = 0; y < 5; y++)
                 {
-                    Image fond = new Image();
-                    fond.Source = fondTexture;
-                    fond.Width = 1024; fond.Height = 1024; fond.Stretch = Stretch.Fill;
-                    Canvas.SetLeft(fond, x * 1024); Canvas.SetTop(fond, y * 1024);
-                    Panel.SetZIndex(fond, -999);
-                    MondeDeJeu.Children.Insert(0, fond);
+                    Image tuile = new Image();
+                    tuile.Source = fondTexture;
+                    tuile.Width = tailleTuile;
+                    tuile.Height = tailleTuile;
+                    tuile.Stretch = Stretch.Fill;
+
+                    // Positionnement
+                    Canvas.SetLeft(tuile, x * tailleTuile);
+                    Canvas.SetTop(tuile, y * tailleTuile);
+
+                    // On met ZIndex négatif pour que le joueur marche DESSUS
+                    Panel.SetZIndex(tuile, -1000);
+
+                    MondeDeJeu.Children.Add(tuile);
                 }
             }
         }
+
+        private void GameLoop(object sender, EventArgs e)
+        {
+            if (isPaused) return;
+            if (isPlayerDying) { GererAnimationMortJoueur(); return; }
+
+            GererVaguesEtSpawns();
+            GererStamina();
+            GererBouclier();
+            GererRamassageKits();
+
+            double baseSpeed = (isRunning && canRun) ? runSpeed : walkSpeed;
+            double currentX = Canvas.GetLeft(Player);
+            double currentY = Canvas.GetTop(Player);
+
+            double potentialX = currentX;
+            double potentialY = currentY;
+            bool isMoving = false;
+
+            if (goUp) { potentialY -= baseSpeed; isMoving = true; }
+            if (goDown) { potentialY += baseSpeed; isMoving = true; }
+            if (goLeft) { potentialX -= baseSpeed; isMoving = true; PlayerScale.ScaleX = -1; }
+            if (goRight) { potentialX += baseSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
+
+            // --- GESTION DES LIMITES (PAS DE COLLISIONS MURS) ---
+            double nextX = currentX;
+            double nextY = currentY;
+
+            // Limites de la map immense (0 à 10240)
+            if (potentialX >= mapMinX && potentialX <= mapMaxX - 60) nextX = potentialX;
+            if (potentialY >= mapMinY && potentialY <= mapMaxY - 60) nextY = potentialY;
+
+            Canvas.SetLeft(Player, nextX);
+            Canvas.SetTop(Player, nextY);
+
+            UpdateEnemies(nextX, nextY);
+
+            if (estInvulnerable)
+            {
+                tempsInvulnerabilite--;
+                if (tempsInvulnerabilite <= 0)
+                {
+                    estInvulnerable = false;
+                    Player.Opacity = 1;
+                }
+            }
+
+            // Caméra centrée
+            double zoom = 1.5; // Zoom normal pour voir la grande map
+            double screenCenterX = this.ActualWidth / 2;
+            double screenCenterY = this.ActualHeight / 2;
+            if (screenCenterX <= 1) screenCenterX = 600;
+            if (screenCenterY <= 1) screenCenterY = 400;
+
+            Camera.X = screenCenterX - ((nextX + Player.Width / 2) * zoom);
+            Camera.Y = screenCenterY - ((nextY + Player.Height / 2) * zoom);
+
+            GererAnimationJoueur(isMoving);
+        }
+
+        // --- METHODES UTILITAIRES ---
+
+        private void LancerMusiqueJeu()
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Audio", "BLACK OPS 2 ZOMBIES OFFICIAL Theme Song.mp3");
+                if (File.Exists(path))
+                {
+                    musicPlayer.Open(new Uri(path, UriKind.Absolute));
+                    musicPlayer.MediaEnded += (s, e) => { musicPlayer.Position = TimeSpan.Zero; musicPlayer.Play(); };
+                    musicPlayer.Volume = MainWindow.MusicVolume;
+                    musicPlayer.Play();
+                }
+            }
+            catch { }
+        }
+
+        private void JouerEffetSonore(string nomFichier)
+        {
+            try
+            {
+                string path = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Audio", nomFichier);
+                if (File.Exists(path))
+                {
+                    MediaPlayer sfx = new MediaPlayer();
+                    sfx.Open(new Uri(path, UriKind.Absolute));
+                    sfx.Volume = MainWindow.MusicVolume;
+                    sfx.Play();
+                }
+            }
+            catch { }
+        }
+
+        private BitmapImage ChargerImage(string relativePath)
+        {
+            try
+            {
+                string fullPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativePath);
+                if (File.Exists(fullPath)) return new BitmapImage(new Uri(fullPath, UriKind.Absolute));
+                else return null;
+            }
+            catch { return null; }
+        }
+
+        // --- LOGIQUE DE JEU ---
 
         private void SetupWave(int waveNumber)
         {
@@ -235,71 +318,6 @@ namespace SandSurvival
             GridCompteARebours.Visibility = Visibility.Visible;
             isCountingDown = true;
             isWaveActive = false;
-        }
-
-        private void GameLoop(object sender, EventArgs e)
-        {
-            if (isPaused) return;
-            if (isPlayerDying) { GererAnimationMortJoueur(); return; }
-
-            GererVaguesEtSpawns();
-            GererStamina();
-            GererBouclier();
-            GererRamassageKits();
-
-            double baseSpeed = (isRunning && canRun) ? runSpeed : walkSpeed;
-            double currentX = Canvas.GetLeft(Player);
-            double currentY = Canvas.GetTop(Player);
-
-            double potentialX = currentX;
-            double potentialY = currentY;
-            bool isMoving = false;
-
-            if (goUp) { potentialY -= baseSpeed; isMoving = true; }
-            if (goDown) { potentialY += baseSpeed; isMoving = true; }
-            if (goLeft) { potentialX -= baseSpeed; isMoving = true; PlayerScale.ScaleX = -1; }
-            if (goRight) { potentialX += baseSpeed; isMoving = true; PlayerScale.ScaleX = 1; }
-
-            // GESTION COLLISION LIMITES MAP
-            double nextX = currentX;
-            double nextY = currentY;
-
-            if (potentialX >= mapMinX && potentialX <= mapMaxX - 60)
-            {
-                nextX = potentialX;
-            }
-
-            if (potentialY >= mapMinY && potentialY <= mapMaxY - 60)
-            {
-                nextY = potentialY;
-            }
-
-            Canvas.SetLeft(Player, nextX);
-            Canvas.SetTop(Player, nextY);
-
-            UpdateEnemies(nextX, nextY);
-
-            if (estInvulnerable)
-            {
-                tempsInvulnerabilite--;
-                if (tempsInvulnerabilite <= 0)
-                {
-                    estInvulnerable = false;
-                    Player.Opacity = 1;
-                }
-            }
-
-            double zoom = 2.5;
-            double screenCenterX = this.ActualWidth / 2;
-            double screenCenterY = this.ActualHeight / 2;
-
-            if (screenCenterX <= 1) screenCenterX = 600;
-            if (screenCenterY <= 1) screenCenterY = 400;
-
-            Camera.X = screenCenterX - ((nextX + Player.Width / 2) * zoom);
-            Camera.Y = screenCenterY - ((nextY + Player.Height / 2) * zoom);
-
-            GererAnimationJoueur(isMoving);
         }
 
         private void GererVaguesEtSpawns()
@@ -363,11 +381,7 @@ namespace SandSurvival
         private int GetActiveEnemiesCount()
         {
             int c = 0;
-            foreach (var e in enemies)
-            {
-                if (!e.IsDead && !e.IsDying)
-                    c++;
-            }
+            foreach (var e in enemies) { if (!e.IsDead && !e.IsDying) c++; }
             return c;
         }
 
@@ -376,21 +390,11 @@ namespace SandSurvival
             if (isRunning && (goUp || goDown || goLeft || goRight))
             {
                 stamina -= 0.5;
-                if (stamina <= 0)
-                {
-                    stamina = 0;
-                    canRun = false;
-                    isRunning = false;
-                }
+                if (stamina <= 0) { stamina = 0; canRun = false; isRunning = false; }
             }
             else
             {
-                if (stamina < 100)
-                {
-                    stamina += 0.3;
-                    if (stamina >= 20)
-                        canRun = true;
-                }
+                if (stamina < 100) { stamina += 0.3; if (stamina >= 20) canRun = true; }
             }
             BarreStamina.Value = stamina;
             BarreStamina.Foreground = canRun ? Brushes.Orange : Brushes.Gray;
@@ -420,21 +424,11 @@ namespace SandSurvival
             if (isBlocking && canBlock)
             {
                 shieldEnergy -= 0.5;
-                if (shieldEnergy <= 0)
-                {
-                    shieldEnergy = 0;
-                    canBlock = false;
-                    isBlocking = false;
-                }
+                if (shieldEnergy <= 0) { shieldEnergy = 0; canBlock = false; isBlocking = false; }
             }
             else
             {
-                if (shieldEnergy < 100)
-                {
-                    shieldEnergy += 0.2;
-                    if (shieldEnergy >= 20)
-                        canBlock = true;
-                }
+                if (shieldEnergy < 100) { shieldEnergy += 0.2; if (shieldEnergy >= 20) canBlock = true; }
             }
             BarreBouclier.Value = shieldEnergy;
         }
@@ -499,20 +493,12 @@ namespace SandSurvival
                     if (isSurvivalMode)
                     {
                         survivalKillsCounter++;
-                        if (survivalKillsCounter >= 5)
-                        {
-                            SpawnHealthKit();
-                            survivalKillsCounter = 0;
-                        }
+                        if (survivalKillsCounter >= 5) { SpawnHealthKit(); survivalKillsCounter = 0; }
                     }
                     continue;
                 }
 
-                if (ennemi.IsDying)
-                {
-                    AnimateDeath(ennemi);
-                    continue;
-                }
+                if (ennemi.IsDying) { AnimateDeath(ennemi); continue; }
 
                 double eX = Canvas.GetLeft(ennemi.Sprite);
                 double eY = Canvas.GetTop(ennemi.Sprite);
@@ -544,17 +530,9 @@ namespace SandSurvival
                     if (ennemi.FrameCounter > 3)
                     {
                         ennemi.FrameIndex++;
-                        if (ennemi.FrameIndex == 1)
-                        {
-                            JouerEffetSonore("MomieAttaque.mp4");
-                        }
-
-                        if (ennemi.FrameIndex >= mummyAttackSprites.Count)
-                            ennemi.FrameIndex = 0;
-
-                        if (mummyAttackSprites.Count > 0)
-                            ennemi.Sprite.Source = mummyAttackSprites[ennemi.FrameIndex];
-
+                        if (ennemi.FrameIndex == 1) JouerEffetSonore("MomieAttaque.mp4");
+                        if (ennemi.FrameIndex >= mummyAttackSprites.Count) ennemi.FrameIndex = 0;
+                        if (mummyAttackSprites.Count > 0) ennemi.Sprite.Source = mummyAttackSprites[ennemi.FrameIndex];
                         ennemi.FrameCounter = 0;
                     }
                 }
@@ -567,17 +545,13 @@ namespace SandSurvival
                 Rect rPlayer = new Rect(playerX + 15, playerY + 15, 30, 30);
                 Rect rEnemy = new Rect(eX + 15, eY + 15, 30, 30);
 
-                if (rPlayer.IntersectsWith(rEnemy))
-                {
-                    PrendreDegats(10);
-                }
+                if (rPlayer.IntersectsWith(rEnemy)) PrendreDegats(10);
             }
         }
 
         private void PrendreDegats(int degats)
         {
-            if (isPlayerDying) return;
-            if (estInvulnerable) return;
+            if (isPlayerDying || estInvulnerable) return;
 
             if (isBlocking)
             {
@@ -608,20 +582,9 @@ namespace SandSurvival
             }
         }
 
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            TenterAttaque();
-        }
-
-        private void Window_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            CommencerBlocage();
-        }
-
-        private void Window_MouseRightButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            ArreterBlocage();
-        }
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) { TenterAttaque(); }
+        private void Window_MouseRightButtonDown(object sender, MouseButtonEventArgs e) { CommencerBlocage(); }
+        private void Window_MouseRightButtonUp(object sender, MouseButtonEventArgs e) { ArreterBlocage(); }
 
         private void AnimateDeath(Ennemi e)
         {
@@ -630,139 +593,34 @@ namespace SandSurvival
             if (e.FrameCounter > 8)
             {
                 e.FrameIndex++;
-                if (e.FrameIndex >= mummyDeathSprites.Count)
-                {
-                    e.IsDying = false;
-                }
-                else
-                {
-                    e.Sprite.Source = mummyDeathSprites[e.FrameIndex];
-                }
+                if (e.FrameIndex >= mummyDeathSprites.Count) e.IsDying = false;
+                else e.Sprite.Source = mummyDeathSprites[e.FrameIndex];
                 e.FrameCounter = 0;
             }
         }
-
-        // --- LOGIQUE DES ACTIONS (Clavier OU Souris) ---
-
-        private void CommencerBlocage()
-        {
-            if (canBlock && !isPlayerDying && !isPaused)
-            {
-                isBlocking = true;
-            }
-        }
-
-        private void ArreterBlocage()
-        {
-            isBlocking = false;
-        }
-
-        private void TenterAttaque()
-        {
-            if (isPlayerDying || isPaused) return;
-
-            // Si on n'est pas déjà en train d'attaquer
-            if (!isAttacking && attackSprites.Count > 0)
-            {
-                isAttacking = true;
-                currentFrame = 0;
-                frameCounter = 0;
-                Player.Source = attackSprites[0];
-                JouerEffetSonore("AttaqueEffect.mp4");
-
-                // --- CALCULE DE TOUCHÉ ---
-                double pX = Canvas.GetLeft(Player) + 30;
-                double pY = Canvas.GetTop(Player) + 30;
-
-                foreach (var ennemi in enemies)
-                {
-                    if (ennemi.IsDead || ennemi.IsDying) continue;
-
-                    double eX = Canvas.GetLeft(ennemi.Sprite) + 30;
-                    double eY = Canvas.GetTop(ennemi.Sprite) + 30;
-                    double dist = Math.Sqrt(Math.Pow(pX - eX, 2) + Math.Pow(pY - eY, 2));
-
-                    if (dist < 80)
-                    {
-                        ennemi.HP--;
-                        ennemi.HealthBar.Value = ennemi.HP;
-                        ennemi.Sprite.Opacity = 0.5;
-
-                        DispatcherTimer t = new DispatcherTimer();
-                        t.Interval = TimeSpan.FromMilliseconds(100);
-                        Ennemi target = ennemi;
-                        t.Tick += (s, args) =>
-                        {
-                            if (!target.IsDying) target.Sprite.Opacity = 1;
-                            t.Stop();
-                        };
-                        t.Start();
-
-                        if (ennemi.HP <= 0)
-                        {
-                            JouerEffetSonore("MomieDeath.mp4");
-                            ennemi.IsDead = true;
-                            ennemi.IsDying = true;
-                            ennemi.FrameIndex = 0;
-                            if (mummyDeathSprites.Count > 0)
-                                ennemi.Sprite.Source = mummyDeathSprites[0];
-                        }
-                    }
-                }
-            }
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         private void SpawnEnemy()
         {
             enemiesSpawnedInWave++;
             Ennemi n = new Ennemi();
-            n.Sprite = new Image();
-            n.Sprite.Width = 60;
-            n.Sprite.Height = 60;
+            n.Sprite = new Image { Width = 60, Height = 60 };
 
-            if (mummySprites.Count > 0)
-                n.Sprite.Source = mummySprites[0];
-            else
-                return;
+            if (mummySprites.Count > 0) n.Sprite.Source = mummySprites[0];
+            else return;
 
             n.Sprite.RenderTransformOrigin = new Point(0.5, 0.5);
             n.Scale = new ScaleTransform();
             n.Sprite.RenderTransform = n.Scale;
             Panel.SetZIndex(n.Sprite, 9998);
 
-            n.HealthBar = new ProgressBar();
-            n.HealthBar.Width = 40;
-            n.HealthBar.Height = 5;
-            n.HealthBar.Foreground = Brushes.Red;
-            n.HealthBar.Background = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0));
-            n.HealthBar.BorderBrush = Brushes.Black;
-            n.HealthBar.BorderThickness = new Thickness(1);
+            n.HealthBar = new ProgressBar { Width = 40, Height = 5, Foreground = Brushes.Red, Background = new SolidColorBrush(Color.FromArgb(80, 0, 0, 0)), BorderBrush = Brushes.Black, BorderThickness = new Thickness(1) };
             Panel.SetZIndex(n.HealthBar, 10000);
 
             int baseDifficulty = 3;
-            if (this.FindName("DifficultySlider") is Slider d)
-                baseDifficulty = (int)d.Value;
+            if (this.FindName("DifficultySlider") is Slider d) baseDifficulty = (int)d.Value;
 
-            if (isSurvivalMode)
-                n.HP = baseDifficulty + 3;
-            else
-                n.HP = baseDifficulty + ((currentWave - 1) * 2);
+            if (isSurvivalMode) n.HP = baseDifficulty + 3;
+            else n.HP = baseDifficulty + ((currentWave - 1) * 2);
 
             n.HealthBar.Maximum = n.HP;
             n.HealthBar.Value = n.HP;
@@ -796,10 +654,8 @@ namespace SandSurvival
                     {
                         isAttacking = false;
                         currentFrame = 0;
-                        if (isBlocking && blockSprite != null)
-                            Player.Source = blockSprite;
-                        else if (walkSprites.Count > 0)
-                            Player.Source = walkSprites[0];
+                        if (isBlocking && blockSprite != null) Player.Source = blockSprite;
+                        else if (walkSprites.Count > 0) Player.Source = walkSprites[0];
                     }
                     else
                     {
@@ -812,8 +668,7 @@ namespace SandSurvival
 
             if (isBlocking)
             {
-                if (blockSprite != null)
-                    Player.Source = blockSprite;
+                if (blockSprite != null) Player.Source = blockSprite;
                 return;
             }
 
@@ -825,8 +680,7 @@ namespace SandSurvival
                 if (frameCounter > frameDelay)
                 {
                     currentFrame++;
-                    if (currentFrame >= l.Count)
-                        currentFrame = 0;
+                    if (currentFrame >= l.Count) currentFrame = 0;
                     Player.Source = l[currentFrame];
                     frameCounter = 0;
                 }
@@ -837,44 +691,24 @@ namespace SandSurvival
         {
             if (isPaused) return;
 
-            // Déplacement
             if (e.Key == MainWindow.InputUp) goUp = true;
             if (e.Key == MainWindow.InputDown) goDown = true;
             if (e.Key == MainWindow.InputLeft) goLeft = true;
             if (e.Key == MainWindow.InputRight) goRight = true;
-
-            // Sprint (Configurable)
             if (e.Key == MainWindow.InputSprint) isRunning = true;
 
-            // Attaque (Si une touche clavier est configurée)
-            if (e.Key == MainWindow.InputAttack && MainWindow.InputAttack != Key.None)
-            {
-                TenterAttaque();
-            }
-
-            // Blocage (Si une touche clavier est configurée)
-            if (e.Key == MainWindow.InputBlock && MainWindow.InputBlock != Key.None)
-            {
-                CommencerBlocage();
-            }
+            if (e.Key == MainWindow.InputAttack && MainWindow.InputAttack != Key.None) TenterAttaque();
+            if (e.Key == MainWindow.InputBlock && MainWindow.InputBlock != Key.None) CommencerBlocage();
         }
 
         private void Window_KeyUp(object s, KeyEventArgs e)
         {
-            // Déplacement
             if (e.Key == MainWindow.InputUp) goUp = false;
             if (e.Key == MainWindow.InputDown) goDown = false;
             if (e.Key == MainWindow.InputLeft) goLeft = false;
             if (e.Key == MainWindow.InputRight) goRight = false;
-
-            // Sprint
             if (e.Key == MainWindow.InputSprint) isRunning = false;
-
-            // Arrêt du blocage (Clavier)
-            if (e.Key == MainWindow.InputBlock)
-            {
-                ArreterBlocage();
-            }
+            if (e.Key == MainWindow.InputBlock) ArreterBlocage();
         }
 
         private void Button_Menu_Click(object s, RoutedEventArgs e)
@@ -898,15 +732,13 @@ namespace SandSurvival
         {
             isPaused = true;
             gameTimer.Stop();
-            if (this.FindName("GridPause") is Grid g)
-                g.Visibility = Visibility.Visible;
+            if (this.FindName("GridPause") is Grid g) g.Visibility = Visibility.Visible;
         }
 
         private void Button_Reprendre_Click(object sender, RoutedEventArgs e)
         {
             isPaused = false;
-            if (this.FindName("GridPause") is Grid g)
-                g.Visibility = Visibility.Collapsed;
+            if (this.FindName("GridPause") is Grid g) g.Visibility = Visibility.Collapsed;
             gameTimer.Start();
             this.Focus();
         }
@@ -924,6 +756,67 @@ namespace SandSurvival
         {
             walkSpeed = e.NewValue;
             runSpeed = walkSpeed * 1.6;
+        }
+
+        private void CommencerBlocage()
+        {
+            if (canBlock && !isPlayerDying && !isPaused) isBlocking = true;
+        }
+
+        private void ArreterBlocage()
+        {
+            isBlocking = false;
+        }
+
+        private void TenterAttaque()
+        {
+            if (isPlayerDying || isPaused) return;
+
+            if (!isAttacking && attackSprites.Count > 0)
+            {
+                isAttacking = true;
+                currentFrame = 0;
+                frameCounter = 0;
+                Player.Source = attackSprites[0];
+                JouerEffetSonore("AttaqueEffect.mp4");
+
+                double pX = Canvas.GetLeft(Player) + 30;
+                double pY = Canvas.GetTop(Player) + 30;
+
+                foreach (var ennemi in enemies)
+                {
+                    if (ennemi.IsDead || ennemi.IsDying) continue;
+
+                    double eX = Canvas.GetLeft(ennemi.Sprite) + 30;
+                    double eY = Canvas.GetTop(ennemi.Sprite) + 30;
+                    double dist = Math.Sqrt(Math.Pow(pX - eX, 2) + Math.Pow(pY - eY, 2));
+
+                    if (dist < 80)
+                    {
+                        ennemi.HP--;
+                        ennemi.HealthBar.Value = ennemi.HP;
+                        ennemi.Sprite.Opacity = 0.5;
+
+                        DispatcherTimer t = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+                        Ennemi target = ennemi;
+                        t.Tick += (s, args) =>
+                        {
+                            if (!target.IsDying) target.Sprite.Opacity = 1;
+                            t.Stop();
+                        };
+                        t.Start();
+
+                        if (ennemi.HP <= 0)
+                        {
+                            JouerEffetSonore("MomieDeath.mp4");
+                            ennemi.IsDead = true;
+                            ennemi.IsDying = true;
+                            ennemi.FrameIndex = 0;
+                            if (mummyDeathSprites.Count > 0) ennemi.Sprite.Source = mummyDeathSprites[0];
+                        }
+                    }
+                }
+            }
         }
     }
 }
