@@ -68,6 +68,16 @@
                 </TextBlock.Effect>
             </TextBlock>
 
+            <TextBlock x:Name="TexteBoss" 
+           Text="⚠️ LE BOSS ARRIVE ! ⚠️" 
+           Visibility="Collapsed"
+           Canvas.Left="450" Canvas.Top="80" 
+           FontSize="40" FontWeight="Bold" Foreground="Red" FontFamily="Segoe UI Black">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="Black" ShadowDepth="4" BlurRadius="5"/>
+                </TextBlock.Effect>
+            </TextBlock>
+
 
             <ProgressBar x:Name="BarreStamina" Width="250" Height="15" Value="100" Maximum="100" Canvas.Left="20" Canvas.Top="60" Foreground="Orange" Background="#55000000" BorderBrush="#8B4513" BorderThickness="2"/>
             <TextBlock Text="ENDURANCE" FontSize="10" Canvas.Left="30" Canvas.Top="61" FontWeight="Bold" Foreground="White" IsHitTestVisible="False"/>

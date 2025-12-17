@@ -138,7 +138,7 @@
                                 Margin="0,5"
                                 FontSize="18"
                                 Foreground="#5C3317"
-                                Text="3. Attention aux obstacles et aux pièges !"
+                                Text="3. Attention à votre stamina !"
                                 TextWrapping="Wrap" />
                             <TextBlock
                                 Margin="0,20"

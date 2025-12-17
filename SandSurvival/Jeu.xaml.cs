@@ -21,6 +21,9 @@ namespace SandSurvival
         public bool IsDying { get; set; }
         public int FrameIndex { get; set; }
         public int FrameCounter { get; set; }
+
+        // AJOUT ICI :
+        public bool IsBoss { get; set; }
     }
 
     public partial class Jeu : Window
@@ -38,9 +41,11 @@ namespace SandSurvival
         private bool isBlocking = false;
         private double shieldEnergy = 100;
         private bool canBlock = true;
+        private bool bossSpawnedInWave = false; // Pour savoir si le boss est déjà là
 
         // --- Variables pour l'EASTER EGG ---
         private bool isTitanMode = false; // Mode Titan (Touche T)
+        private bool hasUsedKamikaze = false; // Pour limiter à 1 utilisation
         private int totalKills = 0; // Compteur total de kills
 
         private List<Image> healthKits = new List<Image>();
@@ -380,30 +385,54 @@ namespace SandSurvival
             {
                 if (!isSurvivalMode)
                 {
-                    int max = 1;
-                    if (enemiesSpawnedInWave < enemiesToKillTotal && GetActiveEnemiesCount() < max)
-                        SpawnEnemy();
+                    // VAGUE STANDARD
 
-                    if (enemiesKilledInWave >= enemiesToKillTotal)
+                    // Tant qu'on n'a pas tué assez de momies, on en fait spawn
+                    if (enemiesKilledInWave < enemiesToKillTotal)
                     {
-                        isWaveActive = false;
-                        TexteFinVague.Text = "VAGUE " + currentWave + " TERMINÉE";
-                        GridVagueFinie.Visibility = Visibility.Visible;
-                        isWaveFinishedMessage = true;
-                        messageTimer = 5.0;
+                        int max = 1;
+                        if (enemiesSpawnedInWave < enemiesToKillTotal && GetActiveEnemiesCount() < max)
+                            SpawnEnemy();
+                    }
+                    // Quand toutes les momies normales sont mortes...
+                    else
+                    {
+                        // ... On fait apparaître le BOSS s'il n'est pas encore là
+                        if (!bossSpawnedInWave)
+                        {
+                            SpawnBoss();
+                        }
+                        // Si le Boss est mort (il n'est plus dans la liste), la vague est finie
+                        else if (GetActiveBossCount() == 0)
+                        {
+                            isWaveActive = false;
+                            TexteFinVague.Text = "VAGUE " + currentWave + " TERMINÉE";
+                            GridVagueFinie.Visibility = Visibility.Visible;
+                            isWaveFinishedMessage = true;
+                            messageTimer = 5.0;
+                            bossSpawnedInWave = false; // Reset pour sécurité
+                        }
                     }
                 }
                 else
                 {
+                    // MODE SURVIE
                     spawnTimer -= 0.016;
                     if (spawnTimer <= 0)
                     {
-                        if (enemies.Count < 20)
-                            SpawnEnemy();
-                        spawnTimer = 2.0;
+                        if (enemies.Count < 50) SpawnEnemy();
+                        spawnTimer = 0.5;
                     }
                 }
             }
+        }
+
+        // Petite fonction utilitaire pour vérifier si le boss est vivant
+        private int GetActiveBossCount()
+        {
+            int c = 0;
+            foreach (var e in enemies) { if (e.IsBoss && !e.IsDead) c++; }
+            return c;
         }
 
         private int GetActiveEnemiesCount()
@@ -528,11 +557,18 @@ namespace SandSurvival
                     MondeDeJeu.Children.Remove(ennemi.Sprite);
                     MondeDeJeu.Children.Remove(ennemi.HealthBar);
                     enemies.RemoveAt(i);
-
-                    // Compteurs
                     enemiesKilledInWave++;
+
+                    // SI LE BOSS MEURT
+                    if (ennemi.IsBoss)
+                    {
+                        if (this.FindName("TexteBoss") is TextBlock tb) tb.Visibility = Visibility.Collapsed;
+                        bossSpawnedInWave = false; // Reset pour la prochaine fois
+                    }
+
+                    // Score
                     totalKills++;
-                    TexteScore.Text = "MOMIES TUÉES : " + totalKills;
+                    if (this.FindName("TexteScore") is TextBlock t) t.Text = "MOMIES TUÉES : " + totalKills;
 
                     if (isSurvivalMode)
                     {
@@ -544,6 +580,7 @@ namespace SandSurvival
 
                 if (ennemi.IsDying) { AnimateDeath(ennemi); continue; }
 
+                // --- MOUVEMENT ---
                 double eX = Canvas.GetLeft(ennemi.Sprite);
                 double eY = Canvas.GetTop(ennemi.Sprite);
                 double diffX = playerX - eX;
@@ -554,7 +591,9 @@ namespace SandSurvival
 
                 if (dist > 10)
                 {
-                    double speed = 5.5;
+                    // VITESSE : Le Boss court très vite (8.0), les autres normalement (5.5)
+                    double speed = ennemi.IsBoss ? 8.0 : 5.5;
+
                     double nextEX = eX + (diffX / dist) * speed;
                     double nextEY = eY + (diffY / dist) * speed;
                     eX = nextEX; eY = nextEY;
@@ -570,6 +609,7 @@ namespace SandSurvival
                 }
                 else
                 {
+                    // Attaque
                     ennemi.FrameCounter++;
                     if (ennemi.FrameCounter > 3)
                     {
@@ -586,10 +626,17 @@ namespace SandSurvival
                 Canvas.SetLeft(ennemi.HealthBar, eX + 10);
                 Canvas.SetTop(ennemi.HealthBar, eY - 10);
 
+                // --- DEGATS ---
                 Rect rPlayer = new Rect(playerX + 15, playerY + 15, 30, 30);
                 Rect rEnemy = new Rect(eX + 15, eY + 15, 30, 30);
 
-                if (rPlayer.IntersectsWith(rEnemy)) PrendreDegats(10);
+                if (rPlayer.IntersectsWith(rEnemy))
+                {
+                    // Le Boss inflige 34 dégâts (tue en 3 coups car 34*3 > 100)
+                    // Les autres infligent 10
+                    int damage = ennemi.IsBoss ? 34 : 10;
+                    PrendreDegats(damage);
+                }
             }
         }
 
@@ -782,6 +829,28 @@ namespace SandSurvival
                     BarreDeVie.Value = vieJoueur;
                 }
             }
+
+            if (e.Key == Key.K && isSurvivalMode && !hasUsedKamikaze)
+            {
+                hasUsedKamikaze = true; // On verrouille, c'est fini pour cette partie !
+
+                // On tue tous les ennemis présents
+                foreach (var ennemi in enemies)
+                {
+                    ennemi.HP = 0;
+                    ennemi.IsDead = true;
+                    ennemi.IsDying = true;
+                    ennemi.FrameIndex = 0;
+                    if (mummyDeathSprites.Count > 0) ennemi.Sprite.Source = mummyDeathSprites[0];
+                }
+
+                // Le sacrifice : Le joueur tombe à 10 PV
+                vieJoueur = 10;
+                BarreDeVie.Value = vieJoueur;
+                Player.Opacity = 0.5;
+                JouerEffetSonore("Degat.mp4");
+            }
+
         }
 
         private void Window_KeyUp(object s, KeyEventArgs e)
@@ -876,7 +945,7 @@ namespace SandSurvival
 
                     if (dist < 80)
                     {
-                        // MODE TITAN = ONE SHOT
+                        // MODE TITAN
                         if (isTitanMode) ennemi.HP -= 100;
                         else ennemi.HP--;
 
@@ -885,11 +954,7 @@ namespace SandSurvival
 
                         DispatcherTimer t = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
                         Ennemi target = ennemi;
-                        t.Tick += (s, args) =>
-                        {
-                            if (!target.IsDying) target.Sprite.Opacity = 1;
-                            t.Stop();
-                        };
+                        t.Tick += (s, args) => { if (!target.IsDying) target.Sprite.Opacity = 1; t.Stop(); };
                         t.Start();
 
                         if (ennemi.HP <= 0)
@@ -900,9 +965,56 @@ namespace SandSurvival
                             ennemi.FrameIndex = 0;
                             if (mummyDeathSprites.Count > 0) ennemi.Sprite.Source = mummyDeathSprites[0];
                         }
+
+                        // IMPORTANT : On arrête la boucle ici pour ne frapper qu'UN SEUL ennemi
+                        break;
                     }
                 }
             }
         }
+
+        private void SpawnBoss()
+        {
+            bossSpawnedInWave = true;
+
+            // Affiche le texte d'alerte
+            if (this.FindName("TexteBoss") is TextBlock tb) tb.Visibility = Visibility.Visible;
+            JouerEffetSonore("MomieAttaque.mp4"); // Son d'apparition (ou un autre si tu as)
+
+            Ennemi boss = new Ennemi();
+            boss.IsBoss = true; // C'est le CHEF
+
+            boss.Sprite = new Image { Width = 90, Height = 90 }; // Il est plus gros (90px au lieu de 60)
+            if (mummySprites.Count > 0) boss.Sprite.Source = mummySprites[0];
+
+            boss.Sprite.RenderTransformOrigin = new Point(0.5, 0.5);
+            boss.Scale = new ScaleTransform();
+            boss.Sprite.RenderTransform = boss.Scale;
+            Panel.SetZIndex(boss.Sprite, 9999); // Au dessus des autres
+
+            // Barre de vie du boss (plus grande)
+            boss.HealthBar = new ProgressBar { Width = 80, Height = 10, Foreground = Brushes.DarkRed, Background = Brushes.Black, BorderBrush = Brushes.White, BorderThickness = new Thickness(1) };
+            Panel.SetZIndex(boss.HealthBar, 10000);
+
+            // STATS DU BOSS
+            boss.HP = 10; // Résistant (10 coups min)
+            boss.HealthBar.Maximum = boss.HP;
+            boss.HealthBar.Value = boss.HP;
+
+            // Spawn aléatoire mais loin du joueur pour laisser le temps de lire le texte
+            Random r = new Random();
+            double sX = r.Next((int)mapMinX + 100, (int)mapMaxX - 100);
+            double sY = r.Next((int)mapMinY + 100, (int)mapMaxY - 100);
+
+            Canvas.SetLeft(boss.Sprite, sX); Canvas.SetTop(boss.Sprite, sY);
+            Canvas.SetLeft(boss.HealthBar, sX + 5); Canvas.SetTop(boss.HealthBar, sY - 20);
+
+            MondeDeJeu.Children.Add(boss.Sprite);
+            MondeDeJeu.Children.Add(boss.HealthBar);
+            enemies.Add(boss);
+        }
+
+
+
     }
 }
